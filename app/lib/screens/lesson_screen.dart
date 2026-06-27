@@ -1,14 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import '../state.dart';
 import '../theme.dart';
 
-class LessonScreen extends StatelessWidget {
+class LessonScreen extends StatefulWidget {
   const LessonScreen({super.key});
 
-  // In production: receive the lesson URL as a route argument and load it in a WebView.
-  // For now, this screen shows the native chrome + mocked lesson content.
+  @override
+  State<LessonScreen> createState() => _LessonScreenState();
+}
+
+class _LessonScreenState extends State<LessonScreen> {
+  late final WebViewController _controller;
+  bool _loading = true;
+  double _appliedScale = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageFinished: (_) {
+          if (!mounted) return;
+          setState(() => _loading = false);
+          // Match the lesson text to the app's text-size setting once loaded.
+          _applyTextZoom(context.read<AppState>().textScale);
+        },
+      ))
+      ..loadRequest(Uri.parse('https://alreadycertified.netlify.app'));
+  }
+
+  /// Scale the remote lesson's text to mirror the in-app text-size choice.
+  /// `text-size-adjust` is honoured by both Android and iOS WebViews, so one
+  /// CSS injection covers both platforms without platform-specific controllers.
+  void _applyTextZoom(double scale) {
+    _appliedScale = scale;
+    final pct = (scale * 100).round();
+    _controller.runJavaScript(
+      "document.documentElement.style.webkitTextSizeAdjust='$pct%';"
+      "document.documentElement.style.textSizeAdjust='$pct%';",
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Re-apply zoom if the text-size setting changes while the lesson is open.
+    final scale = context.watch<AppState>().textScale;
+    if (!_loading && scale != _appliedScale) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _applyTextZoom(scale);
+      });
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF13141F),
       body: SafeArea(
@@ -21,7 +66,7 @@ class LessonScreen extends StatelessWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () => _goHome(context),
                     child: Container(
                       width: 36,
                       height: 36,
@@ -36,7 +81,6 @@ class LessonScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Segmented progress
                   Expanded(
                     child: Row(
                       children: [
@@ -64,104 +108,32 @@ class LessonScreen extends StatelessWidget {
 
             Container(height: 1, color: AppTheme.hairline),
 
-            // Webview boundary label
-            Container(
-              color: const Color(0xFF161822),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white.withOpacity(0.12), style: BorderStyle.solid),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    '↓  EXISTING WEB PAGE · WEBVIEW  ↓',
-                    style: AppTheme.mono(size: 9.5, color: const Color(0xFF4A4C5E)),
-                  ),
-                ),
-              ),
-            ),
-
-            // Lesson content (mocked webview area)
+            // WebView
             Expanded(
-              child: Container(
-                color: const Color(0xFF161822),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(30, 18, 30, 0),
-                  children: [
-                    Text('MODULE 2 · LESSON 4', style: AppTheme.label(size: 12, color: AppTheme.inkFaint)),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Delta Lake gives you ACID tables',
-                      style: AppTheme.display(size: 29, height: 1.1),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Every write is a transaction. Readers always see a consistent snapshot, even while a job is still writing.',
-                      style: AppTheme.body(size: 16, color: AppTheme.inkSoft, height: 1.5),
-                    ),
-                    const SizedBox(height: 20),
-                    _PillCard(
-                      title: 'Atomic commits',
-                      body: 'A write either lands fully or not at all.',
-                    ),
-                    const SizedBox(height: 10),
-                    _PillCard(
-                      title: 'Time travel',
-                      body: 'Query any previous version of a table.',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Bottom nav
-            Container(
-              color: const Color(0xFF161822),
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 26),
-              child: Row(
+              child: Stack(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      width: 54,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E2130),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.hairline),
-                      ),
-                      child: const Center(
-                        child: Text('←', style: TextStyle(color: AppTheme.inkSoft, fontSize: 20, height: 1)),
-                      ),
+                  WebViewWidget(controller: _controller),
+                  if (_loading)
+                    const Center(
+                      child: CircularProgressIndicator(color: AppTheme.snowflakeAccent),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.ink,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          'Continue',
-                          textAlign: TextAlign.center,
-                          style: AppTheme.body(size: 16, weight: FontWeight.w700, color: AppTheme.bg),
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
+
           ],
         ),
       ),
     );
+  }
+
+  // Pop back to the catalog (home) screen regardless of how far the
+  // WebView has navigated inside the lesson.
+  void _goHome(BuildContext context) {
+    final nav = Navigator.of(context);
+    if (nav.canPop()) {
+      nav.popUntil(ModalRoute.withName('/catalog'));
+    }
   }
 
   Widget _seg(bool filled) => Expanded(
@@ -173,31 +145,4 @@ class LessonScreen extends StatelessWidget {
           ),
         ),
       );
-}
-
-class _PillCard extends StatelessWidget {
-  final String title;
-  final String body;
-
-  const _PillCard({required this.title, required this.body});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E2130),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.hairline),
-      ),
-      child: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(text: '$title\n', style: AppTheme.body(size: 15, weight: FontWeight.w600, color: AppTheme.ink)),
-            TextSpan(text: body, style: AppTheme.body(size: 14.5, color: AppTheme.inkSoft, height: 1.4)),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -196,7 +196,7 @@ class _FontButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: context.read<AppState>().motion(const Duration(milliseconds: 200)),
           padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
             color: selected ? AppTheme.ink : const Color(0xFF1E2130),

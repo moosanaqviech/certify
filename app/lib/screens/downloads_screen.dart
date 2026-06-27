@@ -69,7 +69,7 @@ class DownloadsScreen extends StatelessWidget {
                                 Container(color: Colors.white.withOpacity(0.08)),
                                 LayoutBuilder(
                                   builder: (_, c) => AnimatedContainer(
-                                    duration: const Duration(milliseconds: 300),
+                                    duration: state.motion(const Duration(milliseconds: 300)),
                                     width: c.maxWidth * (state.totalMb > 0 ? state.usedMb / state.totalMb : 0.0),
                                     decoration: BoxDecoration(
                                       color: AppTheme.accent,
@@ -111,6 +111,7 @@ class _DownloadRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final motion = context.read<AppState>().motion;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
@@ -147,7 +148,7 @@ class _DownloadRow extends StatelessWidget {
                               Container(color: Colors.white.withOpacity(0.08)),
                               LayoutBuilder(
                                 builder: (_, c) => AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
+                                  duration: motion(const Duration(milliseconds: 200)),
                                   width: c.maxWidth * item.progress,
                                   decoration: BoxDecoration(
                                     color: AppTheme.accent,

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state.dart';
 import '../theme.dart';
 import '../widgets/app_background.dart';
 
@@ -21,14 +23,20 @@ class _SplashScreenState extends State<SplashScreen>
     _barCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat();
+    );
     _barAnim = Tween<double>(begin: -1.3, end: 3.3).animate(
       CurvedAnimation(parent: _barCtrl, curve: Curves.easeInOut),
     );
+    // Respect reduce-motion: hold the loading bar still instead of looping.
+    if (!context.read<AppState>().reduceMotion) {
+      _barCtrl.repeat();
+    }
 
     Timer(const Duration(milliseconds: 2800), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/onboarding/what');
+      // Returning users who finished onboarding skip straight to the catalog.
+      final done = context.read<AppState>().hasCompletedOnboarding;
+      Navigator.of(context).pushReplacementNamed(done ? '/catalog' : '/onboarding/what');
     });
   }
 
@@ -40,6 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final reduceMotion = context.watch<AppState>().reduceMotion;
     return Scaffold(
       body: AppBackground(
         child: Column(
@@ -101,21 +110,33 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Stack(
                     children: [
                       Container(color: Colors.white.withOpacity(0.10)),
-                      AnimatedBuilder(
-                        animation: _barAnim,
-                        builder: (_, __) {
-                          return FractionallySizedBox(
-                            widthFactor: 0.4,
-                            alignment: Alignment(_barAnim.value, 0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppTheme.accent,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
+                      if (reduceMotion)
+                        FractionallySizedBox(
+                          widthFactor: 0.4,
+                          alignment: Alignment.center,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.accent,
+                              borderRadius: BorderRadius.circular(3),
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        )
+                      else
+                        AnimatedBuilder(
+                          animation: _barAnim,
+                          builder: (_, __) {
+                            return FractionallySizedBox(
+                              widthFactor: 0.4,
+                              alignment: Alignment(_barAnim.value, 0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppTheme.accent,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                     ],
                   ),
                 ),
