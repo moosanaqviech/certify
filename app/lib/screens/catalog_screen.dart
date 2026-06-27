@@ -131,9 +131,9 @@ class _CertCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(cert.vendor, style: AppTheme.display(size: 21)),
+                        Text(cert.track, style: AppTheme.display(size: 20)),
                         const SizedBox(height: 2),
-                        Text(cert.track, style: AppTheme.body(size: 13.5, color: AppTheme.inkSoft)),
+                        Text(cert.vendor, style: AppTheme.body(size: 13.5, color: AppTheme.inkSoft)),
                       ],
                     ),
                   ),
@@ -198,9 +198,9 @@ class _CertCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(cert.vendor, style: AppTheme.display(size: 21, color: AppTheme.inkSoft)),
+                      Text(cert.track, style: AppTheme.display(size: 20, color: AppTheme.inkSoft)),
                       const SizedBox(height: 2),
-                      Text(cert.track, style: AppTheme.body(size: 13.5, color: AppTheme.inkFaint)),
+                      Text(cert.vendor, style: AppTheme.body(size: 13.5, color: AppTheme.inkFaint)),
                     ],
                   ),
                 ),

@@ -71,8 +71,8 @@ class OnboardingCertScreen extends StatelessWidget {
                     for (final cert in state.catalog.where((c) => c.status != CertStatus.locked)) ...[
                       _CertOption(
                         code: cert.examCode,
-                        certName: cert.vendor,
-                        subtitle: cert.track,
+                        certName: cert.track,
+                        subtitle: cert.vendor,
                         letterColor: cert.ink,
                         accentColor: cert.accent,
                         selected: state.selectedCert == cert.id,
