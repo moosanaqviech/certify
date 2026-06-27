@@ -1,4 +1,4 @@
-package com.example.certify
+package app.certify.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
