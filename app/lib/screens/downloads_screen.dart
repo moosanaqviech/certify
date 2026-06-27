@@ -33,7 +33,9 @@ class DownloadsScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(22, 8, 22, 30),
                   children: [
                     Text(
-                      'Keep units on your device to study offline. Databricks · Data Engineer Associate.',
+                      state.currentCert == null
+                          ? 'Keep units on your device to study offline.'
+                          : 'Keep units on your device to study offline. ${state.currentCert!.vendor} · ${state.currentCert!.track}.',
                       style: AppTheme.body(size: 14.5, color: AppTheme.inkSoft, height: 1.5),
                     ),
                     const SizedBox(height: 18),

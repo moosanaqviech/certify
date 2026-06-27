@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/cert.dart';
 import '../theme.dart';
 import '../state.dart';
 import '../widgets/app_background.dart';
@@ -67,38 +68,18 @@ class OnboardingCertScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Column(
                   children: [
-                    _CertOption(
-                      id: 'databricks',
-                      letter: 'D',
-                      certName: 'Databricks',
-                      subtitle: 'Data Engineer Associate',
-                      letterColor: AppTheme.databricksInk,
-                      accentColor: AppTheme.databricksAccent,
-                      selected: state.selectedCert == 'databricks',
-                      onTap: () => state.selectCert('databricks'),
-                    ),
-                    const SizedBox(height: 12),
-                    _CertOption(
-                      id: 'snowflake',
-                      letter: 'S',
-                      certName: 'Snowflake',
-                      subtitle: 'SnowPro Core',
-                      letterColor: AppTheme.snowflakeInk,
-                      accentColor: AppTheme.snowflakeAccent,
-                      selected: state.selectedCert == 'snowflake',
-                      onTap: () => state.selectCert('snowflake'),
-                    ),
-                    const SizedBox(height: 12),
-                    _CertOption(
-                      id: 'dbt',
-                      letter: 'd',
-                      certName: 'dbt',
-                      subtitle: 'Analytics Engineer',
-                      letterColor: AppTheme.dbtInk,
-                      accentColor: AppTheme.dbtAccent,
-                      selected: state.selectedCert == 'dbt',
-                      onTap: () => state.selectCert('dbt'),
-                    ),
+                    for (final cert in state.catalog.where((c) => c.status != CertStatus.locked)) ...[
+                      _CertOption(
+                        monogram: cert.monogram,
+                        certName: cert.vendor,
+                        subtitle: '${cert.track} · ${cert.examCode}',
+                        letterColor: cert.ink,
+                        accentColor: cert.accent,
+                        selected: state.selectedCert == cert.id,
+                        onTap: () => state.selectCert(cert.id),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ],
                 ),
               ),
@@ -130,8 +111,7 @@ class OnboardingCertScreen extends StatelessWidget {
 }
 
 class _CertOption extends StatelessWidget {
-  final String id;
-  final String letter;
+  final String monogram;
   final String certName;
   final String subtitle;
   final Color letterColor;
@@ -140,8 +120,7 @@ class _CertOption extends StatelessWidget {
   final VoidCallback onTap;
 
   const _CertOption({
-    required this.id,
-    required this.letter,
+    required this.monogram,
     required this.certName,
     required this.subtitle,
     required this.letterColor,
@@ -175,7 +154,15 @@ class _CertOption extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: accentColor.withOpacity(0.4)),
               ),
-              child: Center(child: Text(letter, style: AppTheme.display(size: 20, color: letterColor))),
+              child: Center(
+                child: Text(
+                  monogram,
+                  style: AppTheme.display(
+                    size: monogram.length >= 3 ? 13 : (monogram.length == 2 ? 16 : 20),
+                    color: letterColor,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(

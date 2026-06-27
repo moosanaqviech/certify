@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'models/cert.dart';
+import 'repositories/cert_repository.dart';
 import 'services/settings_store.dart';
 
 enum DownloadState { idle, downloading, done }
@@ -39,7 +41,7 @@ class DownloadItem {
 
 class AppState extends ChangeNotifier {
   bool hasCompletedOnboarding = false;
-  String selectedCert = 'databricks';
+  String selectedCert = 'azure-az900';
 
   bool notifStreak = true;
   bool notifNew = true;
@@ -49,18 +51,65 @@ class AppState extends ChangeNotifier {
   bool reduceMotion = false;
   int fontIdx = 1;
 
-  final List<DownloadItem> downloads = [
-    DownloadItem(id: 'u1', name: 'Foundations of the Lakehouse', sizeMb: 42, state: DownloadState.done, progress: 1.0),
-    DownloadItem(id: 'u2', name: 'Delta Lake & ACID tables', sizeMb: 58, state: DownloadState.downloading, progress: 0.46),
-    DownloadItem(id: 'u3', name: 'ELT pipelines with Spark', sizeMb: 71),
-    DownloadItem(id: 'u4', name: 'Productionizing workflows', sizeMb: 63),
-  ];
+  // Catalog, loaded from the repository seam (hardcoded today, backend later).
+  List<Cert> _catalog = [];
+  List<Cert> get catalog => _catalog;
+  bool catalogLoading = true;
+
+  /// The cert the user is currently focused on. Falls back to the first cert
+  /// if the persisted id isn't in the catalog (e.g. after a catalog change).
+  Cert? get currentCert {
+    if (_catalog.isEmpty) return null;
+    return _catalog.firstWhere(
+      (c) => c.id == selectedCert,
+      orElse: () => _catalog.first,
+    );
+  }
+
+  // Live download state for the current cert's units. Rebuilt whenever the
+  // catalog loads or the selected cert changes.
+  List<DownloadItem> downloads = [];
 
   final SettingsStore _store;
+  final CertRepository _certRepo;
 
-  AppState(this._store) {
+  AppState(this._store, this._certRepo) {
     _loadSettings();
-    _startDownloadTimer('u2');
+    _loadCatalog();
+  }
+
+  Future<void> _loadCatalog() async {
+    _catalog = await _certRepo.fetchCatalog();
+    catalogLoading = false;
+    _rebuildDownloads();
+    notifyListeners();
+  }
+
+  /// Replace the live download list with runtime items for the current cert,
+  /// seeding their initial state and resuming any in-flight download.
+  void _rebuildDownloads() {
+    for (final d in downloads) {
+      d.timer?.cancel();
+    }
+    final cert = currentCert;
+    downloads = cert == null
+        ? []
+        : cert.units
+            .map((u) => DownloadItem(
+                  id: u.id,
+                  name: u.name,
+                  sizeMb: u.sizeMb,
+                  state: u.downloaded
+                      ? DownloadState.done
+                      : u.downloading
+                          ? DownloadState.downloading
+                          : DownloadState.idle,
+                  progress: u.downloaded ? 1.0 : (u.downloading ? 0.46 : 0.0),
+                ))
+            .toList();
+    for (final d in downloads) {
+      if (d.state == DownloadState.downloading) _startDownloadTimer(d.id);
+    }
   }
 
   /// Hydrate in-memory state from persisted settings. Falls back to the
@@ -123,6 +172,7 @@ class AppState extends ChangeNotifier {
   void selectCert(String id) {
     selectedCert = id;
     _store.setString(_Keys.selectedCert, id);
+    _rebuildDownloads();
     notifyListeners();
   }
 

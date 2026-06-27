@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'state.dart';
+import 'repositories/cert_repository.dart';
 import 'services/settings_store.dart';
 import 'theme.dart';
 import 'screens/splash_screen.dart';
@@ -25,9 +26,11 @@ void main() async {
   final settingsStore = SharedPrefsSettingsStore();
   await settingsStore.load();
 
+  final certRepository = LocalCertRepository();
+
   runApp(
     ChangeNotifierProvider(
-      create: (_) => AppState(settingsStore),
+      create: (_) => AppState(settingsStore, certRepository),
       child: const CertifyApp(),
     ),
   );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../models/cert.dart';
 import '../state.dart';
 import '../theme.dart';
 
@@ -12,9 +13,13 @@ class LessonScreen extends StatefulWidget {
 }
 
 class _LessonScreenState extends State<LessonScreen> {
+  static const _fallbackUrl = 'https://alreadycertified.netlify.app';
+
   late final WebViewController _controller;
   bool _loading = true;
   double _appliedScale = 1.0;
+  bool _started = false;
+  Cert? _cert;
 
   @override
   void initState() {
@@ -28,8 +33,17 @@ class _LessonScreenState extends State<LessonScreen> {
           // Match the lesson text to the app's text-size setting once loaded.
           _applyTextZoom(context.read<AppState>().textScale);
         },
-      ))
-      ..loadRequest(Uri.parse('https://alreadycertified.netlify.app'));
+      ));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The Cert arrives as a route argument; load its URL once it's available.
+    if (_started) return;
+    _started = true;
+    _cert = ModalRoute.of(context)?.settings.arguments as Cert?;
+    _controller.loadRequest(Uri.parse(_cert?.lessonUrl ?? _fallbackUrl));
   }
 
   /// Scale the remote lesson's text to mirror the in-app text-size choice.
@@ -53,6 +67,9 @@ class _LessonScreenState extends State<LessonScreen> {
         if (mounted) _applyTextZoom(scale);
       });
     }
+
+    final accent = _cert?.accent ?? AppTheme.accent;
+    final filled = _cert == null ? 3 : (_cert!.progress * 4).round().clamp(0, 4);
 
     return Scaffold(
       backgroundColor: const Color(0xFF13141F),
@@ -84,20 +101,17 @@ class _LessonScreenState extends State<LessonScreen> {
                   Expanded(
                     child: Row(
                       children: [
-                        _seg(true),
-                        const SizedBox(width: 5),
-                        _seg(true),
-                        const SizedBox(width: 5),
-                        _seg(true),
-                        const SizedBox(width: 5),
-                        _seg(false),
+                        for (int i = 0; i < 4; i++) ...[
+                          if (i > 0) const SizedBox(width: 5),
+                          _seg(i < filled, accent),
+                        ],
                       ],
                     ),
                   ),
                   const SizedBox(width: 12),
                   Row(
                     children: [
-                      const Icon(Icons.check, size: 14, color: AppTheme.snowflakeAccent),
+                      Icon(Icons.check, size: 14, color: accent),
                       const SizedBox(width: 5),
                       Text('Saved', style: AppTheme.body(size: 11.5, color: AppTheme.inkFaint)),
                     ],
@@ -114,8 +128,8 @@ class _LessonScreenState extends State<LessonScreen> {
                 children: [
                   WebViewWidget(controller: _controller),
                   if (_loading)
-                    const Center(
-                      child: CircularProgressIndicator(color: AppTheme.snowflakeAccent),
+                    Center(
+                      child: CircularProgressIndicator(color: accent),
                     ),
                 ],
               ),
@@ -136,11 +150,11 @@ class _LessonScreenState extends State<LessonScreen> {
     }
   }
 
-  Widget _seg(bool filled) => Expanded(
+  Widget _seg(bool filled, Color accent) => Expanded(
         child: Container(
           height: 3,
           decoration: BoxDecoration(
-            color: filled ? AppTheme.ink : Colors.white.withOpacity(0.14),
+            color: filled ? accent : Colors.white.withOpacity(0.14),
             borderRadius: BorderRadius.circular(3),
           ),
         ),
