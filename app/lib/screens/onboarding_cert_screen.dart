@@ -70,9 +70,9 @@ class OnboardingCertScreen extends StatelessWidget {
                   children: [
                     for (final cert in state.catalog.where((c) => c.status != CertStatus.locked)) ...[
                       _CertOption(
-                        monogram: cert.monogram,
+                        code: cert.examCode,
                         certName: cert.vendor,
-                        subtitle: '${cert.track} · ${cert.examCode}',
+                        subtitle: cert.track,
                         letterColor: cert.ink,
                         accentColor: cert.accent,
                         selected: state.selectedCert == cert.id,
@@ -111,7 +111,7 @@ class OnboardingCertScreen extends StatelessWidget {
 }
 
 class _CertOption extends StatelessWidget {
-  final String monogram;
+  final String code;
   final String certName;
   final String subtitle;
   final Color letterColor;
@@ -120,7 +120,7 @@ class _CertOption extends StatelessWidget {
   final VoidCallback onTap;
 
   const _CertOption({
-    required this.monogram,
+    required this.code,
     required this.certName,
     required this.subtitle,
     required this.letterColor,
@@ -154,12 +154,15 @@ class _CertOption extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: accentColor.withOpacity(0.4)),
               ),
-              child: Center(
-                child: Text(
-                  monogram,
-                  style: AppTheme.display(
-                    size: monogram.length >= 3 ? 13 : (monogram.length == 2 ? 16 : 20),
-                    color: letterColor,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      code,
+                      style: AppTheme.body(size: 13, weight: FontWeight.w700, color: letterColor),
+                    ),
                   ),
                 ),
               ),

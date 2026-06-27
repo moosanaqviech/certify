@@ -47,11 +47,6 @@ class CatalogScreen extends StatelessWidget {
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
                         children: [
-                          Text(
-                            'WEDNESDAY · JUNE 20',
-                            style: AppTheme.label(size: 11.5, color: AppTheme.inkFaint),
-                          ),
-                          const SizedBox(height: 6),
                           Text('Your catalog', style: AppTheme.display(size: 30)),
                           const SizedBox(height: 16),
 
@@ -145,34 +140,14 @@ class _CertCard extends StatelessWidget {
                   inProgress ? _badge('IN PROGRESS', cert) : _newBadge(cert),
                 ],
               ),
-              const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: SizedBox(
-                  height: 6,
-                  child: Stack(children: [
-                    Container(color: Colors.white.withOpacity(0.08)),
-                    FractionallySizedBox(
-                      widthFactor: cert.progress.clamp(0.0, 1.0),
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: cert.accent,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                    ),
-                  ]),
-                ),
-              ),
-              const SizedBox(height: 9),
+              const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Total lessons is real content metadata; per-user progress is
+                  // intentionally not shown until it can be tracked for real.
                   Text(
-                    inProgress
-                        ? '${cert.lessonsDone} of ${cert.lessonsTotal} lessons · ${(cert.progress * 100).round()}%'
-                        : '0 of ${cert.lessonsTotal} lessons · not started',
+                    '${cert.lessonsTotal} lessons',
                     style: AppTheme.body(size: 12, color: AppTheme.inkFaint, letterSpacing: 0.03 * 12),
                   ),
                   Row(
@@ -216,10 +191,7 @@ class _CertCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppTheme.hairline),
                   ),
-                  child: Center(
-                    child: Text(cert.monogram,
-                        style: AppTheme.display(size: _monogramSize(cert.monogram), color: AppTheme.inkFaint)),
-                  ),
+                  child: _codeGlyph(cert.examCode, AppTheme.inkFaint),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -279,9 +251,18 @@ class _CertCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: cert.accent.withOpacity(0.35)),
         ),
+        child: _codeGlyph(cert.examCode, cert.ink),
+      );
+
+  /// The exam code, scaled to fit the badge — distinguishes certs from the
+  /// same vendor (e.g. AZ-900 vs AZ-104) better than a shared monogram.
+  static Widget _codeGlyph(String code, Color color) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Center(
-          child: Text(cert.monogram,
-              style: AppTheme.display(size: _monogramSize(cert.monogram), color: cert.ink)),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(code, style: AppTheme.body(size: 14, weight: FontWeight.w700, color: color)),
+          ),
         ),
       );
 
@@ -304,9 +285,6 @@ class _CertCard extends StatelessWidget {
         ),
         child: Text('New', style: AppTheme.body(size: 10.5, weight: FontWeight.w700, color: AppTheme.bg)),
       );
-
-  static double _monogramSize(String monogram) =>
-      monogram.length >= 3 ? 15 : (monogram.length == 2 ? 18 : 24);
 }
 
 class _GearIcon extends StatelessWidget {
