@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
 /// Where a cert sits in the learner's journey. Drives which card variant the
-/// catalog renders.
-enum CertStatus { inProgress, brandNew, locked }
+/// catalog renders. `comingSoon` certs have no real lesson content yet, so they
+/// must not navigate anywhere.
+enum CertStatus { inProgress, brandNew, comingSoon, locked }
 
 CertStatus _statusFromJson(String v) => switch (v) {
       'in_progress' => CertStatus.inProgress,
+      'coming_soon' => CertStatus.comingSoon,
       'locked' => CertStatus.locked,
       _ => CertStatus.brandNew,
     };
 
 String _statusToJson(CertStatus s) => switch (s) {
       CertStatus.inProgress => 'in_progress',
+      CertStatus.comingSoon => 'coming_soon',
       CertStatus.locked => 'locked',
       CertStatus.brandNew => 'new',
     };

@@ -53,12 +53,14 @@ class CatalogScreen extends StatelessWidget {
                           for (final cert in state.catalog) ...[
                             _CertCard(
                               cert: cert,
-                              onTap: cert.status == CertStatus.locked
-                                  ? null
-                                  : () {
-                                      state.selectCert(cert.id);
-                                      Navigator.of(context).pushNamed('/lesson', arguments: cert);
-                                    },
+                              onTap: switch (cert.status) {
+                                CertStatus.inProgress || CertStatus.brandNew => () {
+                                    state.selectCert(cert.id);
+                                    Navigator.of(context).pushNamed('/lesson', arguments: cert);
+                                  },
+                                CertStatus.comingSoon => () => _showComingSoon(context, cert),
+                                CertStatus.locked => null,
+                              },
                             ),
                             const SizedBox(height: 16),
                           ],
@@ -91,6 +93,9 @@ class _CertCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (cert.status == CertStatus.locked) return _locked();
+    if (cert.status == CertStatus.comingSoon) {
+      return GestureDetector(onTap: onTap, child: _comingSoon());
+    }
     return GestureDetector(onTap: onTap, child: _active());
   }
 
@@ -166,6 +171,61 @@ class _CertCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _comingSoon() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161822),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _monogram(cert),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(cert.track, style: AppTheme.display(size: 20)),
+                    const SizedBox(height: 2),
+                    Text(cert.vendor, style: AppTheme.body(size: 13.5, color: AppTheme.inkSoft)),
+                  ],
+                ),
+              ),
+              _soonBadge(),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${cert.lessonsTotal} lessons',
+                  style: AppTheme.body(size: 12, color: AppTheme.inkFaint, letterSpacing: 0.03 * 12)),
+              Text('Coming soon',
+                  style: AppTheme.body(size: 13, weight: FontWeight.w600, color: AppTheme.inkFaint)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _soonBadge() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(100),
+          border: Border.all(color: AppTheme.hairline),
+        ),
+        child: Text('COMING SOON',
+            style: AppTheme.body(size: 10.5, weight: FontWeight.w600, color: AppTheme.inkFaint, letterSpacing: 0.06 * 10.5)),
+      );
 
   Widget _locked() {
     return Container(
@@ -285,6 +345,22 @@ class _CertCard extends StatelessWidget {
         ),
         child: Text('New', style: AppTheme.body(size: 10.5, weight: FontWeight.w700, color: AppTheme.bg)),
       );
+}
+
+void _showComingSoon(BuildContext context, Cert cert) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          '${cert.track} is coming soon!',
+          style: AppTheme.body(size: 14, weight: FontWeight.w600, color: AppTheme.ink),
+        ),
+        backgroundColor: AppTheme.surfaceRaised,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
 }
 
 class _GearIcon extends StatelessWidget {

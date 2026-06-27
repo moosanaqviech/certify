@@ -68,7 +68,8 @@ class OnboardingCertScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Column(
                   children: [
-                    for (final cert in state.catalog.where((c) => c.status != CertStatus.locked)) ...[
+                    for (final cert in state.catalog.where(
+                        (c) => c.status == CertStatus.inProgress || c.status == CertStatus.brandNew)) ...[
                       _CertOption(
                         code: cert.examCode,
                         certName: cert.track,

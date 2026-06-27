@@ -41,7 +41,7 @@ class DownloadItem {
 
 class AppState extends ChangeNotifier {
   bool hasCompletedOnboarding = false;
-  String selectedCert = 'azure-az900';
+  String selectedCert = 'databricks-dea';
 
   bool notifStreak = true;
   bool notifNew = true;

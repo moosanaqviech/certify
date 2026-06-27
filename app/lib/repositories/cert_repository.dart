@@ -34,6 +34,27 @@ class LocalCertRepository implements CertRepository {
   @override
   Future<List<Cert>> fetchCatalog() async {
     return const [
+      // The only cert with real lesson content today, so it's the one that
+      // actually opens. Everything below is "coming soon" and must not navigate.
+      Cert(
+        id: 'databricks-dea',
+        vendor: 'Databricks',
+        track: 'Data Engineer Associate',
+        examCode: 'DEA',
+        monogram: 'D',
+        accentArgb: _databricksAccent,
+        inkArgb: _databricksInk,
+        lessonUrl: _lessonUrl,
+        lessonsDone: 11,
+        lessonsTotal: 26,
+        status: CertStatus.inProgress,
+        units: [
+          LessonUnit(id: 'dea-u1', name: 'Foundations of the Lakehouse', sizeMb: 42, downloaded: true),
+          LessonUnit(id: 'dea-u2', name: 'Delta Lake & ACID tables', sizeMb: 58, downloading: true),
+          LessonUnit(id: 'dea-u3', name: 'ELT pipelines with Spark', sizeMb: 71),
+          LessonUnit(id: 'dea-u4', name: 'Productionizing workflows', sizeMb: 63),
+        ],
+      ),
       Cert(
         id: 'azure-az900',
         vendor: 'Microsoft Azure',
@@ -43,15 +64,9 @@ class LocalCertRepository implements CertRepository {
         accentArgb: _azureAccent,
         inkArgb: _azureInk,
         lessonUrl: _lessonUrl,
-        lessonsDone: 11,
+        lessonsDone: 0,
         lessonsTotal: 26,
-        status: CertStatus.inProgress,
-        units: [
-          LessonUnit(id: 'az900-u1', name: 'Cloud concepts & the shared model', sizeMb: 38, downloaded: true),
-          LessonUnit(id: 'az900-u2', name: 'Core Azure services', sizeMb: 52, downloading: true),
-          LessonUnit(id: 'az900-u3', name: 'Security, identity & compliance', sizeMb: 61),
-          LessonUnit(id: 'az900-u4', name: 'Pricing, SLAs & lifecycle', sizeMb: 47),
-        ],
+        status: CertStatus.comingSoon,
       ),
       Cert(
         id: 'azure-az104',
@@ -64,7 +79,7 @@ class LocalCertRepository implements CertRepository {
         lessonUrl: _lessonUrl,
         lessonsDone: 0,
         lessonsTotal: 24,
-        status: CertStatus.brandNew,
+        status: CertStatus.comingSoon,
       ),
       Cert(
         id: 'aws-clf',
@@ -77,7 +92,7 @@ class LocalCertRepository implements CertRepository {
         lessonUrl: _lessonUrl,
         lessonsDone: 0,
         lessonsTotal: 20,
-        status: CertStatus.brandNew,
+        status: CertStatus.comingSoon,
       ),
       Cert(
         id: 'aws-saa',
@@ -90,20 +105,7 @@ class LocalCertRepository implements CertRepository {
         lessonUrl: _lessonUrl,
         lessonsDone: 0,
         lessonsTotal: 28,
-        status: CertStatus.brandNew,
-      ),
-      Cert(
-        id: 'databricks-dea',
-        vendor: 'Databricks',
-        track: 'Data Engineer Associate',
-        examCode: 'DEA',
-        monogram: 'D',
-        accentArgb: _databricksAccent,
-        inkArgb: _databricksInk,
-        lessonUrl: _lessonUrl,
-        lessonsDone: 0,
-        lessonsTotal: 26,
-        status: CertStatus.locked,
+        status: CertStatus.comingSoon,
       ),
       Cert(
         id: 'snowflake-core',
@@ -116,7 +118,7 @@ class LocalCertRepository implements CertRepository {
         lessonUrl: _lessonUrl,
         lessonsDone: 0,
         lessonsTotal: 22,
-        status: CertStatus.locked,
+        status: CertStatus.comingSoon,
       ),
       Cert(
         id: 'dbt-analytics',
@@ -129,7 +131,7 @@ class LocalCertRepository implements CertRepository {
         lessonUrl: _lessonUrl,
         lessonsDone: 0,
         lessonsTotal: 22,
-        status: CertStatus.locked,
+        status: CertStatus.comingSoon,
       ),
     ];
   }
