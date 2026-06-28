@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme.dart';
 import '../state.dart';
 import '../widgets/app_background.dart';
 import '../widgets/toggle_switch.dart';
+
+/// Hosted on the lesson site (Netlify). Upload privacy-policy.html to the site
+/// root so this URL resolves.
+const _privacyPolicyUrl = 'https://alreadycertified.netlify.app/privacy-policy.html';
+
+Future<void> _openUrl(String url) async {
+  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+}
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -166,7 +175,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          _NavRow(label: 'Privacy policy', onTap: () {}, hasDivider: true),
+                          _NavRow(label: 'Privacy policy', onTap: () => _openUrl(_privacyPolicyUrl), hasDivider: true),
                           _NavRow(label: 'Terms of service', onTap: () {}, hasDivider: false),
                         ],
                       ),
