@@ -14,8 +14,8 @@ abstract class CertRepository {
 /// data-engineering certs kept as premium "specialization" tracks, but the
 /// catalog itself is global — content is the same worldwide.
 ///
-/// Every cert currently points at the one real lesson site; per-cert URLs slot
-/// in here later without touching any screen.
+/// Each cert with real content points at its own lesson site; per-cert URLs
+/// slot in here as new courses ship, without touching any screen.
 class LocalCertRepository implements CertRepository {
   // Base site. The homepage is now the course catalog, so navigable certs must
   // point at their own course path (units & chapters), not the site root.
@@ -24,6 +24,9 @@ class LocalCertRepository implements CertRepository {
   // course paths slot in here as content ships.
   static const _lessonUrl = _site;
   static const _deaUrl = '$_site/databricks-data-engineer-associate/';
+  // Professional course is built on separate infra for now; folds into
+  // certify.courses once that migration happens.
+  static const _depUrl = 'https://certifiedx.netlify.app/';
 
   // Per-vendor colours (ARGB). A backend would supply these as ints too.
   static const _azureAccent = 0xFF3B82F6;
@@ -60,6 +63,19 @@ class LocalCertRepository implements CertRepository {
           LessonUnit(id: 'dea-u3', name: 'ELT pipelines with Spark', sizeMb: 71),
           LessonUnit(id: 'dea-u4', name: 'Productionizing workflows', sizeMb: 63),
         ],
+      ),
+      Cert(
+        id: 'databricks-dep',
+        vendor: 'Databricks',
+        track: 'Data Engineer Professional',
+        examCode: 'DEP',
+        monogram: 'D',
+        accentArgb: _databricksAccent,
+        inkArgb: _databricksInk,
+        lessonUrl: _depUrl,
+        lessonsDone: 0,
+        lessonsTotal: 37,
+        status: CertStatus.brandNew,
       ),
       Cert(
         id: 'azure-az900',
