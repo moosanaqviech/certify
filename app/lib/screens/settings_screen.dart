@@ -6,9 +6,7 @@ import '../state.dart';
 import '../widgets/app_background.dart';
 import '../widgets/toggle_switch.dart';
 
-/// Hosted on the lesson site (Netlify). Upload privacy-policy.html to the site
-/// root so this URL resolves.
-const _privacyPolicyUrl = 'https://alreadycertified.netlify.app/privacy-policy.html';
+const _privacyPolicyUrl = 'https://certify.courses/legal/privacy-policy.html';
 
 Future<void> _openUrl(String url) async {
   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
