@@ -13,7 +13,7 @@ class LessonScreen extends StatefulWidget {
 }
 
 class _LessonScreenState extends State<LessonScreen> {
-  static const _fallbackUrl = 'https://alreadycertified.netlify.app';
+  static const _fallbackUrl = 'https://certify.courses/databricks-data-engineer-associate/';
 
   late final WebViewController _controller;
   bool _loading = true;

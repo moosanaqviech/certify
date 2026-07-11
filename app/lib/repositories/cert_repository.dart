@@ -17,7 +17,13 @@ abstract class CertRepository {
 /// Every cert currently points at the one real lesson site; per-cert URLs slot
 /// in here later without touching any screen.
 class LocalCertRepository implements CertRepository {
-  static const _lessonUrl = 'https://alreadycertified.netlify.app';
+  // Base site. The homepage is now the course catalog, so navigable certs must
+  // point at their own course path (units & chapters), not the site root.
+  static const _site = 'https://certify.courses';
+  // Placeholder for coming-soon certs, which don't navigate yet; their real
+  // course paths slot in here as content ships.
+  static const _lessonUrl = _site;
+  static const _deaUrl = '$_site/databricks-data-engineer-associate/';
 
   // Per-vendor colours (ARGB). A backend would supply these as ints too.
   static const _azureAccent = 0xFF3B82F6;
@@ -44,7 +50,7 @@ class LocalCertRepository implements CertRepository {
         monogram: 'D',
         accentArgb: _databricksAccent,
         inkArgb: _databricksInk,
-        lessonUrl: _lessonUrl,
+        lessonUrl: _deaUrl,
         lessonsDone: 11,
         lessonsTotal: 26,
         status: CertStatus.inProgress,
