@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'state.dart';
 import 'repositories/cert_repository.dart';
+import 'services/notification_service.dart';
 import 'services/settings_store.dart';
 import 'theme.dart';
 import 'screens/splash_screen.dart';
@@ -27,10 +28,11 @@ void main() async {
   await settingsStore.load();
 
   final certRepository = LocalCertRepository();
+  final notificationService = NotificationService();
 
   runApp(
     ChangeNotifierProvider(
-      create: (_) => AppState(settingsStore, certRepository),
+      create: (_) => AppState(settingsStore, certRepository, notificationService),
       child: const CertifyApp(),
     ),
   );

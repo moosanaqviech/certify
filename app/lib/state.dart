@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'models/cert.dart';
 import 'repositories/cert_repository.dart';
+import 'services/notification_service.dart';
 import 'services/settings_store.dart';
 
 enum DownloadState { idle, downloading, done }
@@ -43,7 +44,7 @@ class AppState extends ChangeNotifier {
   bool hasCompletedOnboarding = false;
   String selectedCert = 'databricks-dea';
 
-  bool notifStreak = true;
+  bool notifStreak = false;
   bool notifNew = true;
   bool notifExam = false;
   TimeOfDay remindAt = const TimeOfDay(hour: 20, minute: 30);
@@ -72,10 +73,15 @@ class AppState extends ChangeNotifier {
 
   final SettingsStore _store;
   final CertRepository _certRepo;
+  final NotificationService _notifications;
 
-  AppState(this._store, this._certRepo) {
+  AppState(this._store, this._certRepo, this._notifications) {
     _loadSettings();
     _loadCatalog();
+    // Silently reconcile the OS-scheduled reminder with the persisted
+    // setting. No permission prompt here — that only happens when the user
+    // actively turns the toggle on.
+    if (notifStreak) _notifications.scheduleDailyReminder(remindAt);
   }
 
   Future<void> _loadCatalog() async {
@@ -136,10 +142,20 @@ class AppState extends ChangeNotifier {
   /// Call this anywhere an explicit animation duration is used.
   Duration motion(Duration full) => reduceMotion ? Duration.zero : full;
 
-  void toggleNotif(String key) {
+  Future<void> toggleNotif(String key) async {
     switch (key) {
       case 'streak':
-        notifStreak = !notifStreak;
+        if (notifStreak) {
+          notifStreak = false;
+          await _notifications.cancelDailyReminder();
+        } else {
+          // Only flip on if the OS permission is actually granted, so the
+          // toggle never shows "on" for a reminder that won't fire.
+          final granted = await _notifications.requestPermission();
+          if (!granted) return;
+          notifStreak = true;
+          await _notifications.scheduleDailyReminder(remindAt);
+        }
         _store.setBool(_Keys.notifStreak, notifStreak);
       case 'new':
         notifNew = !notifNew;
@@ -151,9 +167,10 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setRemindAt(TimeOfDay time) {
+  Future<void> setRemindAt(TimeOfDay time) async {
     remindAt = time;
     _store.setInt(_Keys.remindMinutes, time.hour * 60 + time.minute);
+    if (notifStreak) await _notifications.scheduleDailyReminder(time);
     notifyListeners();
   }
 
