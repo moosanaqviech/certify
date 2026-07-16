@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'state.dart';
 import 'repositories/cert_repository.dart';
 import 'services/settings_store.dart';
+import 'services/notification_service.dart';
 import 'theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_what_screen.dart';
@@ -28,9 +29,12 @@ void main() async {
 
   final certRepository = LocalCertRepository();
 
+  final notificationService = LocalNotificationService();
+  await notificationService.init();
+
   runApp(
     ChangeNotifierProvider(
-      create: (_) => AppState(settingsStore, certRepository),
+      create: (_) => AppState(settingsStore, certRepository, notificationService),
       child: const CertifyApp(),
     ),
   );

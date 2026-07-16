@@ -77,9 +77,12 @@ class OnboardingNotifyScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 18, 24, 10),
                 child: GestureDetector(
-                  onTap: () {
-                    context.read<AppState>().completeOnboarding();
-                    Navigator.of(context).pushNamedAndRemoveUntil('/catalog', (_) => false);
+                  onTap: () async {
+                    final state = context.read<AppState>();
+                    final navigator = Navigator.of(context);
+                    await state.enableStudyReminders();
+                    state.completeOnboarding();
+                    navigator.pushNamedAndRemoveUntil('/catalog', (_) => false);
                   },
                   child: Container(
                     width: double.infinity,
@@ -98,9 +101,12 @@ class OnboardingNotifyScreen extends StatelessWidget {
               ),
 
               TextButton(
-                onPressed: () {
-                  context.read<AppState>().completeOnboarding();
-                  Navigator.of(context).pushNamedAndRemoveUntil('/catalog', (_) => false);
+                onPressed: () async {
+                  final state = context.read<AppState>();
+                  final navigator = Navigator.of(context);
+                  await state.declineStudyReminders();
+                  state.completeOnboarding();
+                  navigator.pushNamedAndRemoveUntil('/catalog', (_) => false);
                 },
                 child: Text('Not now', style: AppTheme.body(size: 15, weight: FontWeight.w600, color: AppTheme.inkSoft)),
               ),
