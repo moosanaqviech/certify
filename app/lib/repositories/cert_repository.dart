@@ -23,10 +23,8 @@ class LocalCertRepository implements CertRepository {
   // Placeholder for coming-soon certs, which don't navigate yet; their real
   // course paths slot in here as content ships.
   static const _lessonUrl = _site;
-  static const _deaUrl = '$_site/databricks-data-engineer-associate/';
-  // Professional course is built on separate infra for now; folds into
-  // certify.courses once that migration happens.
-  static const _depUrl = 'https://certifiedx.netlify.app/';
+  static const _deaUrl = '$_site/databricks-data-engineer-associate/index.html';
+  static const _depUrl = '$_site/databricks-data-engineer-professional/index.html';
 
   // Per-vendor colours (ARGB). A backend would supply these as ints too.
   static const _azureAccent = 0xFF3B82F6;
