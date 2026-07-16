@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'state.dart';
 import 'repositories/cert_repository.dart';
-import 'services/notification_service.dart';
 import 'services/settings_store.dart';
+import 'services/notification_service.dart';
 import 'theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_what_screen.dart';
@@ -28,7 +28,9 @@ void main() async {
   await settingsStore.load();
 
   final certRepository = LocalCertRepository();
-  final notificationService = NotificationService();
+
+  final notificationService = LocalNotificationService();
+  await notificationService.init();
 
   runApp(
     ChangeNotifierProvider(

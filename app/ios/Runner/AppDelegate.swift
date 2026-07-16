@@ -8,10 +8,10 @@ import UserNotifications
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Lets scheduled study reminders present while the app is in the
-    // foreground, not just when it's backgrounded.
+    // Required by flutter_local_notifications so scheduled notifications are
+    // delivered (and can present while the app is in the foreground).
     if #available(iOS 10.0, *) {
-      UNUserNotificationCenter.current().delegate = self
+      UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
     }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
