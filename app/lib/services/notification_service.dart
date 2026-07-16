@@ -148,6 +148,10 @@ class LocalNotificationService implements NotificationService {
       _nextInstanceOf(time),
       details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      // Required by flutter_local_notifications < 19: the picked time is a
+      // wall-clock time, so interpret it as an absolute point, not elapsed.
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       // Repeat daily at the same wall-clock time.
       matchDateTimeComponents: DateTimeComponents.time,
     );
