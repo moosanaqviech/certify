@@ -4,11 +4,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Lets the scheduled daily reminder survive a device reboot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <!-- Fire the daily reminder at the exact time the user picked. USE_EXACT_ALARM
-         is auto-granted (Android 13+) so the reminder works without a settings
-         trip; SCHEDULE_EXACT_ALARM is the fallback the app can request at runtime.
-         Note: Google Play restricts USE_EXACT_ALARM to alarm/reminder-style apps. -->
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <!-- Fire the daily reminder at the exact time the user picked. The app
+         requests this at runtime (Android 12+ "Alarms & reminders"); if the user
+         declines, scheduling falls back to an inexact alarm. Deliberately NOT
+         using USE_EXACT_ALARM, which Google Play restricts to alarm-clock/calendar
+         apps and would risk rejection for a study-reminder app. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <application
         android:label="Certify"
