@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/cert.dart';
 import 'repositories/cert_repository.dart';
 import 'services/settings_store.dart';
+import 'services/notification_service.dart';
 
 enum DownloadState { idle, downloading, done }
 
@@ -72,10 +73,23 @@ class AppState extends ChangeNotifier {
 
   final SettingsStore _store;
   final CertRepository _certRepo;
+  final NotificationService _notifications;
 
-  AppState(this._store, this._certRepo) {
+  AppState(this._store, this._certRepo, this._notifications) {
     _loadSettings();
     _loadCatalog();
+    _syncDailyReminder();
+  }
+
+  /// Reconcile the OS-scheduled daily reminder with the persisted preference.
+  /// Called on startup so a device reboot or app reinstall re-establishes the
+  /// schedule whenever "Study reminders" is on.
+  Future<void> _syncDailyReminder() async {
+    if (notifStreak) {
+      await _notifications.scheduleDailyReminder(remindAt);
+    } else {
+      await _notifications.cancelDailyReminder();
+    }
   }
 
   Future<void> _loadCatalog() async {
@@ -141,6 +155,23 @@ class AppState extends ChangeNotifier {
       case 'streak':
         notifStreak = !notifStreak;
         _store.setBool(_Keys.notifStreak, notifStreak);
+        // Study reminders are the one alert with a purely on-device trigger, so
+        // toggling this actually schedules/cancels an OS notification.
+        if (notifStreak) {
+          _notifications.requestPermission().then((granted) {
+            if (granted) {
+              _notifications.scheduleDailyReminder(remindAt);
+            } else {
+              // Permission denied at the OS level: reflect reality in the UI
+              // rather than showing an "on" toggle that will never fire.
+              notifStreak = false;
+              _store.setBool(_Keys.notifStreak, false);
+              notifyListeners();
+            }
+          });
+        } else {
+          _notifications.cancelDailyReminder();
+        }
       case 'new':
         notifNew = !notifNew;
         _store.setBool(_Keys.notifNew, notifNew);
@@ -154,6 +185,33 @@ class AppState extends ChangeNotifier {
   void setRemindAt(TimeOfDay time) {
     remindAt = time;
     _store.setInt(_Keys.remindMinutes, time.hour * 60 + time.minute);
+    // Re-anchor the scheduled reminder to the new time when it's active.
+    if (notifStreak) {
+      _notifications.scheduleDailyReminder(time);
+    }
+    notifyListeners();
+  }
+
+  /// Request notification permission and turn on the daily study reminder.
+  /// Used by the onboarding "Turn on reminders" call-to-action. Returns whether
+  /// permission was granted.
+  Future<bool> enableStudyReminders() async {
+    final granted = await _notifications.requestPermission();
+    notifStreak = granted;
+    _store.setBool(_Keys.notifStreak, granted);
+    if (granted) {
+      await _notifications.scheduleDailyReminder(remindAt);
+    }
+    notifyListeners();
+    return granted;
+  }
+
+  /// Turn off the daily study reminder. Used by the onboarding "Not now"
+  /// opt-out so the persisted preference matches the user's choice.
+  Future<void> declineStudyReminders() async {
+    notifStreak = false;
+    _store.setBool(_Keys.notifStreak, false);
+    await _notifications.cancelDailyReminder();
     notifyListeners();
   }
 
