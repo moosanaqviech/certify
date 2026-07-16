@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -93,6 +94,10 @@ class LocalNotificationService implements NotificationService {
     if (android != null) {
       // Android 13+ requires an explicit runtime notification permission.
       final granted = await android.requestNotificationsPermission();
+      // Android 12+ gates exact alarms behind a separate grant. USE_EXACT_ALARM
+      // covers most devices; this asks for the SCHEDULE_EXACT_ALARM fallback so
+      // the reminder still fires at the exact time where that's needed.
+      await android.requestExactAlarmsPermission();
       return granted ?? true;
     }
 
@@ -141,13 +146,33 @@ class LocalNotificationService implements NotificationService {
     // Replace any existing schedule so changing the time doesn't stack.
     await _plugin.cancel(_dailyReminderId);
 
-    await _plugin.zonedSchedule(
+    // Prefer an exact alarm so the reminder lands at the chosen minute. If the
+    // device hasn't granted the exact-alarm permission, the plugin throws
+    // 'exact_alarms_not_permitted' — fall back to an inexact alarm (fires
+    // approximately, but at least fires) rather than dropping the reminder.
+    try {
+      await _schedule(time, details, AndroidScheduleMode.exactAllowWhileIdle);
+    } on PlatformException catch (e) {
+      if (e.code == 'exact_alarms_not_permitted') {
+        await _schedule(time, details, AndroidScheduleMode.inexactAllowWhileIdle);
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> _schedule(
+    TimeOfDay time,
+    NotificationDetails details,
+    AndroidScheduleMode mode,
+  ) {
+    return _plugin.zonedSchedule(
       _dailyReminderId,
       'Time to study',
       "A few minutes today keeps your certification on track.",
       _nextInstanceOf(time),
       details,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: mode,
       // Required by flutter_local_notifications < 19: the picked time is a
       // wall-clock time, so interpret it as an absolute point, not elapsed.
       uiLocalNotificationDateInterpretation:
