@@ -13,7 +13,8 @@ class LessonScreen extends StatefulWidget {
 }
 
 class _LessonScreenState extends State<LessonScreen> {
-  static const _fallbackUrl = 'https://certify.courses/databricks-data-engineer-associate/';
+  static const _fallbackUrl =
+      'https://certify.courses/databricks-data-engineer-associate/';
 
   late final WebViewController _controller;
   bool _loading = true;
@@ -69,94 +70,91 @@ class _LessonScreenState extends State<LessonScreen> {
     }
 
     final accent = _cert?.accent ?? AppTheme.accent;
-    final filled = _cert == null ? 3 : (_cert!.progress * 4).round().clamp(0, 4);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF13141F),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Native top bar
-            Container(
-              color: const Color(0xFF13141F),
-              padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => _goHome(context),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E2130),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.hairline),
-                      ),
-                      child: const Center(
-                        child: Text('←', style: TextStyle(color: AppTheme.ink, fontSize: 19, height: 1)),
+    // Route the Android system back button/gesture through the same handler as
+    // the on-screen chevron: step back through the WebView first, then exit.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBack();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF13141F),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Native top bar
+              Container(
+                color: const Color(0xFF13141F),
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: _onBack,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E2130),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.hairline),
+                        ),
+                        child: const Center(
+                          child: Text('←',
+                              style: TextStyle(
+                                  color: AppTheme.ink,
+                                  fontSize: 19,
+                                  height: 1)),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Row(
+                    const Spacer(),
+                    Row(
                       children: [
-                        for (int i = 0; i < 4; i++) ...[
-                          if (i > 0) const SizedBox(width: 5),
-                          _seg(i < filled, accent),
-                        ],
+                        Icon(Icons.check, size: 14, color: accent),
+                        const SizedBox(width: 5),
+                        Text('Saved',
+                            style: AppTheme.body(
+                                size: 11.5, color: AppTheme.inkFaint)),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Row(
-                    children: [
-                      Icon(Icons.check, size: 14, color: accent),
-                      const SizedBox(width: 5),
-                      Text('Saved', style: AppTheme.body(size: 11.5, color: AppTheme.inkFaint)),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            Container(height: 1, color: AppTheme.hairline),
+              Container(height: 1, color: AppTheme.hairline),
 
-            // WebView
-            Expanded(
-              child: Stack(
-                children: [
-                  WebViewWidget(controller: _controller),
-                  if (_loading)
-                    Center(
-                      child: CircularProgressIndicator(color: accent),
-                    ),
-                ],
+              // WebView
+              Expanded(
+                child: Stack(
+                  children: [
+                    WebViewWidget(controller: _controller),
+                    if (_loading)
+                      Center(
+                        child: CircularProgressIndicator(color: accent),
+                      ),
+                  ],
+                ),
               ),
-            ),
-
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Pop back to the catalog (home) screen regardless of how far the
-  // WebView has navigated inside the lesson.
-  void _goHome(BuildContext context) {
+  // Step back through the WebView's own history first (a lesson returns to the
+  // course's chapter catalog), and only exit to the native all-courses catalog
+  // once the WebView is at its first page and can't go back any further.
+  Future<void> _onBack() async {
+    if (await _controller.canGoBack()) {
+      await _controller.goBack();
+      return;
+    }
+    if (!mounted) return;
     final nav = Navigator.of(context);
     if (nav.canPop()) {
       nav.popUntil(ModalRoute.withName('/catalog'));
     }
   }
-
-  Widget _seg(bool filled, Color accent) => Expanded(
-        child: Container(
-          height: 3,
-          decoration: BoxDecoration(
-            color: filled ? accent : Colors.white.withOpacity(0.14),
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-      );
 }
