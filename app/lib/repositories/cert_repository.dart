@@ -25,6 +25,7 @@ class LocalCertRepository implements CertRepository {
   static const _lessonUrl = _site;
   static const _deaUrl = '$_site/databricks-data-engineer-associate/index.html';
   static const _depUrl = '$_site/databricks-data-engineer-professional/index.html';
+  static const _awsDeaUrl = '$_site/aws-data-engineer-associate/index.html';
 
   // Per-vendor colours (ARGB). A backend would supply these as ints too.
   static const _azureAccent = 0xFF3B82F6;
@@ -41,8 +42,8 @@ class LocalCertRepository implements CertRepository {
   @override
   Future<List<Cert>> fetchCatalog() async {
     return const [
-      // The only cert with real lesson content today, so it's the one that
-      // actually opens. Everything below is "coming soon" and must not navigate.
+      // Certs with real lesson content (this and AWS Data Engineer Associate
+      // below) actually open; everything marked "coming soon" must not navigate.
       Cert(
         id: 'databricks-dea',
         vendor: 'Databricks',
@@ -100,6 +101,20 @@ class LocalCertRepository implements CertRepository {
         lessonsDone: 0,
         lessonsTotal: 24,
         status: CertStatus.comingSoon,
+      ),
+      // Live on the site: real lesson content, so this one navigates.
+      Cert(
+        id: 'aws-dea',
+        vendor: 'AWS',
+        track: 'Data Engineer Associate',
+        examCode: 'DEA-C01',
+        monogram: 'aws',
+        accentArgb: _awsAccent,
+        inkArgb: _awsInk,
+        lessonUrl: _awsDeaUrl,
+        lessonsDone: 0,
+        lessonsTotal: 36,
+        status: CertStatus.brandNew,
       ),
       Cert(
         id: 'aws-clf',
