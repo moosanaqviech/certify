@@ -1,0 +1,6 @@
+// App Store signing for the Runner target.
+// Kept in a dedicated xcconfig so `flutter`/CocoaPods regens that rewrite
+// project.pbxproj can't silently strip the team/signing style before a release.
+// Team "16480926 Canada Inc." (Y25WC97M6A) — see ios-release-setup notes.
+DEVELOPMENT_TEAM = Y25WC97M6A
+CODE_SIGN_STYLE = Automatic
