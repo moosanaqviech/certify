@@ -25,7 +25,10 @@ class OnboardingCertScreen extends StatelessWidget {
                   children: [
                     const SizedBox(width: 48),
                     TextButton(
-                      onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/catalog', (_) => false),
+                      onPressed: () {
+                        state.completeOnboarding();
+                        Navigator.of(context).pushNamedAndRemoveUntil('/catalog', (_) => false);
+                      },
                       child: Text('Skip', style: AppTheme.body(size: 14, weight: FontWeight.w600, color: AppTheme.inkFaint)),
                     ),
                   ],
