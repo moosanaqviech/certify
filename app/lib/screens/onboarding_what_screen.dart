@@ -39,8 +39,6 @@ class OnboardingWhatScreen extends StatelessWidget {
                     _dot(true),
                     const SizedBox(width: 7),
                     _dot(false),
-                    const SizedBox(width: 7),
-                    _dot(false),
                   ],
                 ),
               ),
@@ -159,7 +157,7 @@ class OnboardingWhatScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 18, 24, 30),
                 child: _PrimaryButton(
                   label: 'Continue',
-                  onTap: () => Navigator.of(context).pushNamed('/onboarding/cert'),
+                  onTap: () => Navigator.of(context).pushNamed('/onboarding/notify'),
                 ),
               ),
             ],

@@ -28,8 +28,6 @@ class OnboardingNotifyScreen extends StatelessWidget {
                   children: [
                     _dot(false),
                     const SizedBox(width: 7),
-                    _dot(false),
-                    const SizedBox(width: 7),
                     _dot(true),
                   ],
                 ),
