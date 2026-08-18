@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state.dart';
 import '../theme.dart';
 import '../widgets/app_background.dart';
 
@@ -19,7 +21,10 @@ class OnboardingWhatScreen extends StatelessWidget {
                   children: [
                     const SizedBox(width: 48),
                     TextButton(
-                      onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/catalog', (_) => false),
+                      onPressed: () {
+                        context.read<AppState>().completeOnboarding();
+                        Navigator.of(context).pushNamedAndRemoveUntil('/catalog', (_) => false);
+                      },
                       child: Text('Skip', style: AppTheme.body(size: 14, weight: FontWeight.w600, color: AppTheme.inkFaint)),
                     ),
                   ],
@@ -32,8 +37,6 @@ class OnboardingWhatScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     _dot(true),
-                    const SizedBox(width: 7),
-                    _dot(false),
                     const SizedBox(width: 7),
                     _dot(false),
                   ],
@@ -154,7 +157,7 @@ class OnboardingWhatScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 18, 24, 30),
                 child: _PrimaryButton(
                   label: 'Continue',
-                  onTap: () => Navigator.of(context).pushNamed('/onboarding/cert'),
+                  onTap: () => Navigator.of(context).pushNamed('/onboarding/notify'),
                 ),
               ),
             ],

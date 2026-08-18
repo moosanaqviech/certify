@@ -8,7 +8,6 @@ import 'services/notification_service.dart';
 import 'theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_what_screen.dart';
-import 'screens/onboarding_cert_screen.dart';
 import 'screens/onboarding_notify_screen.dart';
 import 'screens/catalog_screen.dart';
 import 'screens/lesson_screen.dart';
@@ -70,7 +69,6 @@ class CertifyApp extends StatelessWidget {
       routes: {
         '/': (_) => const SplashScreen(),
         '/onboarding/what': (_) => const OnboardingWhatScreen(),
-        '/onboarding/cert': (_) => const OnboardingCertScreen(),
         '/onboarding/notify': (_) => const OnboardingNotifyScreen(),
         '/catalog': (_) => const CatalogScreen(),
         '/lesson': (_) => const LessonScreen(),
