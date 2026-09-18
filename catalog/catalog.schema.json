@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://certify.courses/catalog.schema.json",
+  "title": "Certify course catalog",
+  "description": "The single source of truth for the Certify catalog. Generated from the site's course content and published at https://certify.courses/catalog.json. The mobile app fetches this at runtime; it describes ONLY course/content metadata. Per-user progress (how many lessons a learner finished) and per-device download state are NOT in this file — the app merges those locally by cert id.",
+  "type": "object",
+  "required": ["version", "generated_at", "certs"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Contract/schema version. Bump only on a breaking shape change so old app builds can refuse an incompatible manifest and fall back to their bundled copy."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the generator last emitted this file. Used for cache diagnostics/'last updated'."
+    },
+    "certs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cert" }
+    }
+  },
+  "$defs": {
+    "cert": {
+      "type": "object",
+      "required": ["id", "vendor", "track", "monogram", "accent", "ink", "lesson_url", "lessons_total", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Stable, kebab-case identity. NEVER reused or renamed — the app merges local progress/download state onto this key. Renaming an id silently resets a learner's progress."
+        },
+        "vendor": { "type": "string", "description": "e.g. \"Databricks\", \"AWS\", \"Microsoft Azure\", \"Oracle\"." },
+        "track": { "type": "string", "description": "Human course title, e.g. \"Data Engineer Associate\"." },
+        "exam_code": {
+          "type": ["string", "null"],
+          "description": "Vendor exam code (e.g. \"DEA-C01\"). null/omitted when the vendor has no short code (most Databricks certs). App must tolerate a missing code."
+        },
+        "monogram": { "type": "string", "description": "Short badge label rendered on the card, e.g. \"D\", \"aws\", \"Az\"." },
+        "accent": {
+          "type": "string",
+          "pattern": "^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$",
+          "description": "Card accent colour, hex #RRGGBB or #AARRGGBB. (Replaces the old decimal accent_argb int — see README app-side change.)"
+        },
+        "ink": {
+          "type": "string",
+          "pattern": "^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$",
+          "description": "Card ink/text colour, hex. (Replaces ink_argb.)"
+        },
+        "lesson_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Full URL the WebView opens for this course. For status=planned this may point at the site root; the app must NOT navigate planned certs regardless."
+        },
+        "lessons_total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total lessons/chapters the finished course will have. 0 for planned certs with no content yet. Drives the progress denominator; numerator is local."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["live", "authoring", "planned", "retiring"],
+          "description": "CONTENT availability, not learner progress. live = all lessons published; authoring = some lessons live, more being written; planned = announced, no content (do not navigate); retiring = live but the exam is being withdrawn (see available_until)."
+        },
+        "available_until": {
+          "type": "string",
+          "format": "date",
+          "description": "Optional. For status=retiring: last date the exam can be taken."
+        },
+        "exam_available_from": {
+          "type": "string",
+          "format": "date",
+          "description": "Optional. First date the vendor exam can be sat (for brand-new exams)."
+        },
+        "units": {
+          "type": "array",
+          "description": "Optional top-level sections/domains of the course. Emitted by the generator from the course's real section list; may be omitted until wired up.",
+          "items": {
+            "type": "object",
+            "required": ["id", "name"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+              "name": { "type": "string" },
+              "size_mb": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Optional download size. Omit until offline downloads are implemented."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

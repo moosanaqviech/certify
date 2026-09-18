@@ -1,7 +1,7 @@
 name: certify
 description: Certify — study, certify, repeat.
 publish_to: 'none'
-version: 1.1.1+3
+version: 1.1.2+4
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -17,7 +17,6 @@ dependencies:
   flutter_local_notifications: ^17.2.3
   flutter_timezone: ^4.0.0
   timezone: ^0.9.4
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -26,6 +25,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    # Bundled fallback catalog, so the app shows courses on first launch with
+    # no network. The live source of truth is https://certify.courses/catalog.json.
+    - assets/catalog.json
 
 # Generates platform launcher icons from a single source PNG.
 # 1. Save the 1024x1024 icon at assets/icon/icon.png

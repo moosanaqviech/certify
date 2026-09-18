@@ -1,21 +1,111 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/services.dart' show rootBundle;
+
 import '../models/cert.dart';
+import '../services/settings_store.dart';
 
 /// The seam between the UI/state layer and the source of catalog data.
 ///
-/// The app depends only on this interface. Today [LocalCertRepository] returns
-/// a hardcoded seed; when the backend lands, an `ApiCertRepository` can return
-/// the same `Future<List<Cert>>` from the network with zero UI changes. Kept
-/// `Future`-based from day one so adding latency later doesn't reshape callers.
+/// The app depends only on this interface. [ApiCertRepository] reads the live
+/// catalog manifest published at `https://certify.courses/catalog.json`, which
+/// is the single source of truth shared with the website. [LocalCertRepository]
+/// remains as a hardcoded fixture for tests. Kept `Future`-based so network
+/// latency never reshapes callers.
 abstract class CertRepository {
   Future<List<Cert>> fetchCatalog();
 }
 
-/// In-memory catalog. Ordered India-first (Azure → AWS), with the
-/// data-engineering certs kept as premium "specialization" tracks, but the
-/// catalog itself is global — content is the same worldwide.
+/// Reads the catalog from the published manifest so the app and website can
+/// never drift: the site generates `catalog.json` from its real course content
+/// and the app fetches it here.
 ///
-/// Each cert with real content points at its own lesson site; per-cert URLs
-/// slot in here as new courses ship, without touching any screen.
+/// Resolution order, so there is always a catalog to show:
+///   1. Network — fetch the live manifest and write it through to the cache.
+///   2. Cache — the last manifest that fetched successfully (survives offline
+///      launches and flaky networks).
+///   3. Bundle — `assets/catalog.json` shipped with the build, so a first
+///      launch with no network still shows a catalog.
+///
+/// Only catalog/content metadata comes from here. Per-user progress and
+/// per-device download state stay local and are merged by cert id elsewhere.
+class ApiCertRepository implements CertRepository {
+  final String catalogUrl;
+  final SettingsStore _cache;
+  final Duration _timeout;
+
+  /// Key under which the last good manifest JSON is cached.
+  static const _cacheKey = 'cached_catalog_json';
+
+  /// Bundled fallback shipped in the app (registered in pubspec.yaml assets).
+  static const _bundledAsset = 'assets/catalog.json';
+
+  ApiCertRepository({
+    required this.catalogUrl,
+    required SettingsStore cache,
+    Duration timeout = const Duration(seconds: 6),
+  })  : _cache = cache,
+        _timeout = timeout;
+
+  @override
+  Future<List<Cert>> fetchCatalog() async {
+    // 1. Network-first. On success, cache the raw JSON so the next cold start
+    //    (or any offline launch) has a fresh copy to fall back to.
+    try {
+      final jsonStr = await _fetchOverNetwork();
+      final certs = _parse(jsonStr);
+      await _cache.setString(_cacheKey, jsonStr);
+      return certs;
+    } catch (_) {
+      // Fall through to the offline fallbacks below.
+    }
+
+    // 2. Last-good cached manifest from a previous successful fetch.
+    final cached = _cache.getString(_cacheKey);
+    if (cached != null) {
+      try {
+        return _parse(cached);
+      } catch (_) {
+        // Corrupt cache: ignore and fall through to the bundled copy.
+      }
+    }
+
+    // 3. Bundled manifest — guarantees a catalog with no network and no cache.
+    final bundled = await rootBundle.loadString(_bundledAsset);
+    return _parse(bundled);
+  }
+
+  Future<String> _fetchOverNetwork() async {
+    final client = HttpClient()..connectionTimeout = _timeout;
+    try {
+      final request =
+          await client.getUrl(Uri.parse(catalogUrl)).timeout(_timeout);
+      final response = await request.close().timeout(_timeout);
+      if (response.statusCode != HttpStatus.ok) {
+        throw HttpException('Catalog fetch failed: HTTP ${response.statusCode}');
+      }
+      return await response.transform(utf8.decoder).join().timeout(_timeout);
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  List<Cert> _parse(String jsonStr) {
+    final root = json.decode(jsonStr) as Map<String, dynamic>;
+    final certs = root['certs'] as List<dynamic>;
+    return certs
+        .map((c) => Cert.fromJson(c as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+}
+
+/// In-memory catalog fixture. No longer the app's source of truth — the app
+/// reads the published manifest via [ApiCertRepository]. Kept for tests and
+/// offline development so a catalog can be built without any I/O. Because it is
+/// not backed by the live manifest, its contents will drift from the site; do
+/// not rely on it for real catalog data.
 class LocalCertRepository implements CertRepository {
   // Base site. The homepage is now the course catalog, so navigable certs must
   // point at their own course path (units & chapters), not the site root.

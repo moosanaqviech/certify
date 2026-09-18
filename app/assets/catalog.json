@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "generated_at": "2026-09-15T00:00:00Z",
+  "certs": [
+    {
+      "id": "databricks-dea",
+      "vendor": "Databricks",
+      "track": "Data Engineer Associate",
+      "exam_code": null,
+      "monogram": "D",
+      "accent": "#8D7BF6",
+      "ink": "#B4A9FF",
+      "lesson_url": "https://certify.courses/databricks-data-engineer-associate/index.html",
+      "lessons_total": 35,
+      "status": "live"
+    },
+    {
+      "id": "databricks-dep",
+      "vendor": "Databricks",
+      "track": "Data Engineer Professional",
+      "exam_code": null,
+      "monogram": "D",
+      "accent": "#8D7BF6",
+      "ink": "#B4A9FF",
+      "lesson_url": "https://certify.courses/databricks-data-engineer-professional/index.html",
+      "lessons_total": 37,
+      "status": "live"
+    },
+    {
+      "id": "databricks-mla",
+      "vendor": "Databricks",
+      "track": "Machine Learning Associate",
+      "exam_code": null,
+      "monogram": "D",
+      "accent": "#8D7BF6",
+      "ink": "#B4A9FF",
+      "lesson_url": "https://certify.courses/databricks-machine-learning-associate/index.html",
+      "lessons_total": 38,
+      "status": "live"
+    },
+    {
+      "id": "databricks-genai",
+      "vendor": "Databricks",
+      "track": "Generative AI Engineer Associate",
+      "exam_code": null,
+      "monogram": "D",
+      "accent": "#8D7BF6",
+      "ink": "#B4A9FF",
+      "lesson_url": "https://certify.courses/databricks-generative-ai-engineer-associate/index.html",
+      "lessons_total": 55,
+      "status": "live"
+    },
+    {
+      "id": "aws-dea",
+      "vendor": "AWS",
+      "track": "Data Engineer Associate",
+      "exam_code": "DEA-C01",
+      "monogram": "aws",
+      "accent": "#F59E0B",
+      "ink": "#F7C873",
+      "lesson_url": "https://certify.courses/aws-data-engineer-associate/index.html",
+      "lessons_total": 36,
+      "status": "authoring"
+    },
+    {
+      "id": "aws-mla-c02",
+      "vendor": "AWS",
+      "track": "Machine Learning Engineer Associate",
+      "exam_code": "MLA-C02",
+      "monogram": "aws",
+      "accent": "#F59E0B",
+      "ink": "#F7C873",
+      "lesson_url": "https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/index.html",
+      "lessons_total": 76,
+      "status": "authoring",
+      "exam_available_from": "2026-09-29",
+      "units": [
+        { "id": "mla-c02-d1", "name": "Data Preparation" },
+        { "id": "mla-c02-d2", "name": "ML and FM Development" },
+        { "id": "mla-c02-d3", "name": "Deployment and Orchestration" },
+        { "id": "mla-c02-d4", "name": "Operating and Securing" }
+      ]
+    },
+    {
+      "id": "aws-mla-c01",
+      "vendor": "AWS",
+      "track": "Machine Learning Engineer Associate (legacy)",
+      "exam_code": "MLA-C01",
+      "monogram": "aws",
+      "accent": "#F59E0B",
+      "ink": "#F7C873",
+      "lesson_url": "https://certify.courses/aws-machine-learning-engineer-associate-mla-c01/index.html",
+      "lessons_total": 59,
+      "status": "retiring",
+      "available_until": "2026-09-28"
+    },
+    {
+      "id": "azure-dp700",
+      "vendor": "Microsoft Azure",
+      "track": "Data Engineer",
+      "exam_code": "DP-700",
+      "monogram": "Az",
+      "accent": "#3B82F6",
+      "ink": "#8AB4F8",
+      "lesson_url": "https://certify.courses",
+      "lessons_total": 0,
+      "status": "planned"
+    },
+    {
+      "id": "oracle-java-se17",
+      "vendor": "Oracle",
+      "track": "Java SE 17 Developer",
+      "exam_code": "1Z0-829",
+      "monogram": "Jv",
+      "accent": "#C74634",
+      "ink": "#E8897B",
+      "lesson_url": "https://certify.courses",
+      "lessons_total": 0,
+      "status": "planned"
+    }
+  ]
+}

@@ -192,7 +192,7 @@ class _CertCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${cert.examCode} · ${cert.lessonsTotal} lessons',
+                      _subtitle(cert),
                       style: AppTheme.body(size: 12.5, color: AppTheme.inkFaint),
                     ),
                     const SizedBox(height: 12),
@@ -261,7 +261,7 @@ class _CertCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppTheme.hairline),
                   ),
-                  child: _codeGlyph(cert.examCode, AppTheme.inkFaint),
+                  child: _BrandMark(cert: cert, color: AppTheme.inkFaint),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -273,7 +273,7 @@ class _CertCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 3),
-                      Text('${cert.examCode} · ${cert.lessonsTotal} lessons',
+                      Text(_subtitle(cert),
                           style: AppTheme.body(size: 12.5, color: AppTheme.inkFaint)),
                     ],
                   ),
@@ -325,19 +325,7 @@ class _CertCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: cert.accent.withOpacity(0.35)),
         ),
-        child: _codeGlyph(cert.examCode, cert.ink),
-      );
-
-  /// The exam code, scaled to fit the badge — distinguishes certs from the
-  /// same vendor (e.g. AZ-900 vs AZ-104) better than a shared monogram.
-  static Widget _codeGlyph(String code, Color color) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Center(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(code, style: AppTheme.body(size: 14, weight: FontWeight.w700, color: color)),
-          ),
-        ),
+        child: _BrandMark(cert: cert, color: cert.ink),
       );
 
   Widget _badge(String label, Cert cert) => Container(
@@ -358,6 +346,67 @@ class _CertCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(100),
         ),
         child: Text('New', style: AppTheme.body(size: 10.5, weight: FontWeight.w700, color: AppTheme.bg)),
+      );
+}
+
+/// Card metadata line. Not every cert has an exam code (e.g. Databricks) and
+/// planned certs have no lessons yet, so each part is shown only when present:
+/// "DEA-C01 · 36 lessons", "35 lessons", or just "DP-700".
+String _subtitle(Cert cert) {
+  final code = cert.examCode;
+  final lessons = cert.lessonsTotal > 0 ? '${cert.lessonsTotal} lessons' : '';
+  if (code.isEmpty) return lessons;
+  if (lessons.isEmpty) return code;
+  return '$code · $lessons';
+}
+
+/// The brand mark shown in a cert's badge. Keyed on the vendor, not the exam
+/// code — many certs have no code, and the brand reads better anyway.
+///
+/// Renders the vendor monogram (in the cert's brand colour) by default. To show
+/// a real vendor logo, drop a monochrome PNG/SVG-exported-PNG into
+/// `assets/brands/`, declare that folder under `flutter: assets:` in
+/// pubspec.yaml, and map the vendor in [_logoAssets]. The asset is tinted with
+/// the badge colour and falls back to the monogram if it fails to load, so
+/// adding logos never risks an empty badge.
+class _BrandMark extends StatelessWidget {
+  final Cert cert;
+  final Color color;
+
+  const _BrandMark({required this.cert, required this.color});
+
+  /// vendor (lower-cased) -> bundled logo asset path. Empty by default; fill in
+  /// as real logos are added. Vendors not listed fall back to the monogram.
+  static const Map<String, String> _logoAssets = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = _logoAssets[cert.vendor.toLowerCase()];
+    if (asset != null) {
+      return Padding(
+        padding: const EdgeInsets.all(11),
+        child: Image.asset(
+          asset,
+          fit: BoxFit.contain,
+          color: color,
+          errorBuilder: (_, __, ___) => _monogram(),
+        ),
+      );
+    }
+    return _monogram();
+  }
+
+  Widget _monogram() => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              cert.monogram,
+              style: AppTheme.body(size: 15, weight: FontWeight.w700, color: color),
+            ),
+          ),
+        ),
       );
 }
 

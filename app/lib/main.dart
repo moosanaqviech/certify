@@ -26,7 +26,12 @@ void main() async {
   final settingsStore = SharedPrefsSettingsStore();
   await settingsStore.load();
 
-  final certRepository = LocalCertRepository();
+  // Reads the live catalog manifest shared with the website, with cache and a
+  // bundled-asset fallback. This is what keeps the app and site in sync.
+  final certRepository = ApiCertRepository(
+    catalogUrl: 'https://certify.courses/catalog.json',
+    cache: settingsStore,
+  );
 
   final notificationService = LocalNotificationService();
   await notificationService.init();
