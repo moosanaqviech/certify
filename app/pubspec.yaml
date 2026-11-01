@@ -29,6 +29,9 @@ flutter:
     # Bundled fallback catalog, so the app shows courses on first launch with
     # no network. The live source of truth is https://certify.courses/catalog.json.
     - assets/catalog.json
+    # Official vendor logos (see assets/brands/README.md). Missing files fall
+    # back to the catalog monogram.
+    - assets/brands/
 
 # Generates platform launcher icons from a single source PNG.
 # 1. Save the 1024x1024 icon at assets/icon/icon.png

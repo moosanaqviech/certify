@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../feature_flags.dart';
 import '../models/cert.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/app_background.dart';
+import '../widgets/cert_visuals.dart';
+import '../widgets/course_sheet.dart';
+import 'lesson_screen.dart';
 
 class CatalogScreen extends StatelessWidget {
   const CatalogScreen({super.key});
@@ -11,6 +15,13 @@ class CatalogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final available = state.catalog.where((c) => c.status != CertStatus.comingSoon).toList();
+    final planned = state.catalog.where((c) => c.status == CertStatus.comingSoon).toList();
+
+    void open(Cert cert, LessonArgs args) {
+      if (args.url == cert.lessonUrl) state.selectCert(cert.id);
+      Navigator.of(context).pushNamed('/lesson', arguments: args);
+    }
 
     return Scaffold(
       body: AppBackground(
@@ -19,22 +30,30 @@ class CatalogScreen extends StatelessWidget {
             children: [
               // Nav bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                padding: const EdgeInsets.fromLTRB(24, 8, 20, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Certify', style: AppTheme.display(size: 20)),
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pushNamed('/settings'),
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF161822),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.hairline),
+                    Semantics(
+                      container: true,
+                      button: true,
+                      label: 'Settings',
+                      excludeSemantics: true,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pushNamed('/settings'),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppTheme.hairline),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.settings_outlined, size: 20, color: AppTheme.inkSoft),
+                          ),
                         ),
-                        child: const Center(child: _GearIcon()),
                       ),
                     ),
                   ],
@@ -45,30 +64,53 @@ class CatalogScreen extends StatelessWidget {
                 child: state.catalogLoading
                     ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
                     : ListView(
-                        padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
                         children: [
                           Text('Your catalog', style: AppTheme.display(size: 30)),
                           const SizedBox(height: 18),
 
                           // Grouped by vendor, mirroring the web catalog's
                           // provider sections. Insertion order is preserved, so
-                          // the repository's ordering drives the section order.
-                          for (final group in _groupByVendor(state.catalog)) ...[
-                            _SectionHeader(vendor: group.vendor, count: group.certs.length),
+                          // the manifest's ordering drives the section order.
+                          for (final group in _groupByVendor(available)) ...[
+                            VendorHeader(
+                              cert: group.certs.first,
+                              count: group.certs.length,
+                            ),
                             const SizedBox(height: 12),
                             for (final cert in group.certs) ...[
-                              _CertCard(
+                              cert.status == CertStatus.locked
+                                  ? PlannedCertCard(cert: cert, locked: true)
+                                  : CertCard(
+                                      cert: cert,
+                                      onStart: () => open(cert, LessonArgs.fromCert(cert)),
+                                      onPractice: () => open(
+                                        cert,
+                                        LessonArgs(
+                                          url: cert.practiceUrl!,
+                                          title: 'Practice · ${cert.track}',
+                                          accent: cert.accent,
+                                        ),
+                                      ),
+                                      onMore: () => showCourseSheet(context, cert),
+                                    ),
+                              const SizedBox(height: 12),
+                            ],
+                            const SizedBox(height: 14),
+                          ],
+
+                          if (planned.isNotEmpty) ...[
+                            _SectionTitle(title: 'Coming soon', count: planned.length),
+                            const SizedBox(height: 12),
+                            for (final cert in planned) ...[
+                              PlannedCertCard(
                                 cert: cert,
-                                onTap: switch (cert.status) {
-                                  CertStatus.inProgress || CertStatus.brandNew => () {
-                                      state.selectCert(cert.id);
-                                      Navigator.of(context).pushNamed('/lesson', arguments: cert);
-                                    },
-                                  CertStatus.comingSoon => () => _showComingSoon(context, cert),
-                                  CertStatus.locked => null,
+                                onNotify: () {
+                                  state.notifyWhenAvailable(cert);
+                                  _snack(context, "We'll let you know when ${cert.track} launches.");
                                 },
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                             ],
                             const SizedBox(height: 14),
                           ],
@@ -76,7 +118,7 @@ class CatalogScreen extends StatelessWidget {
                           Center(
                             child: Text(
                               'More certifications are on the way.',
-                              style: AppTheme.body(size: 13, color: AppTheme.inkFaint),
+                              style: AppTheme.body(size: 13, color: AppTheme.inkMuted),
                             ),
                           ),
                         ],
@@ -107,13 +149,44 @@ List<_VendorGroup> _groupByVendor(List<Cert> catalog) {
   return [for (final e in byVendor.entries) _VendorGroup(e.key, e.value)];
 }
 
-/// Vendor section heading + a count of its certs (e.g. "Databricks ·
-/// 3 certifications"), matching the web catalog's grouped layout.
-class _SectionHeader extends StatelessWidget {
-  final String vendor;
+String _certCount(int n) => '$n ${n == 1 ? 'certification' : 'certifications'}';
+
+/// Vendor section heading: logo (monogram fallback) + vendor + cert count.
+class VendorHeader extends StatelessWidget {
+  /// Any cert from the vendor's group — supplies vendor name and colours.
+  final Cert cert;
   final int count;
 
-  const _SectionHeader({required this.vendor, required this.count});
+  const VendorHeader({super.key, required this.cert, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppTheme.hairline),
+          ),
+          child: BrandMark(cert: cert, color: cert.ink, padding: 4),
+        ),
+        const SizedBox(width: 10),
+        Flexible(child: Text(cert.vendor, style: AppTheme.display(size: 17))),
+        const SizedBox(width: 8),
+        Text(_certCount(count), style: AppTheme.body(size: 12.5, color: AppTheme.inkMuted)),
+      ],
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final int count;
+
+  const _SectionTitle({required this.title, required this.count});
 
   @override
   Widget build(BuildContext context) {
@@ -121,302 +194,251 @@ class _SectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Flexible(child: Text(vendor, style: AppTheme.display(size: 17))),
+        Text(title, style: AppTheme.display(size: 17)),
         const SizedBox(width: 8),
-        Text(
-          '$count ${count == 1 ? 'certification' : 'certifications'}',
-          style: AppTheme.body(size: 12.5, color: AppTheme.inkFaint),
-        ),
+        Text(_certCount(count), style: AppTheme.body(size: 12.5, color: AppTheme.inkMuted)),
       ],
     );
   }
 }
 
-/// One catalog card. The title (cert track) gets its own full-width line so it
-/// never breaks mid-word, and the status/CTA sit on a metadata row below.
-class _CertCard extends StatelessWidget {
+/// A navigable course card. Every line below the title is optional and only
+/// renders when the manifest (or local progress) provides it.
+class CertCard extends StatelessWidget {
   final Cert cert;
-  final VoidCallback? onTap;
+  final VoidCallback onStart;
+  final VoidCallback onPractice;
+  final VoidCallback onMore;
 
-  const _CertCard({required this.cert, this.onTap});
+  /// Defaults to [FeatureFlags.showPrices] (off); overridable for tests.
+  final bool showPrices;
+
+  const CertCard({
+    super.key,
+    required this.cert,
+    required this.onStart,
+    required this.onPractice,
+    required this.onMore,
+    this.showPrices = FeatureFlags.showPrices,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (cert.status == CertStatus.locked) return _locked();
-    return GestureDetector(onTap: onTap, child: _card());
-  }
-
-  Widget _card() {
-    final inProgress = cert.status == CertStatus.inProgress;
-    final comingSoon = cert.status == CertStatus.comingSoon;
+    final stats = certStatsLine(cert);
+    final started = cert.lessonsDone > 0 || cert.status == CertStatus.inProgress;
+    final price = cert.price;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF161822),
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppTheme.hairline),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (inProgress)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: RadialGradient(
-                    center: const Alignment(-1.0, -1.0),
-                    radius: 1.2,
-                    colors: [cert.accent.withOpacity(0.18), Colors.transparent],
-                    stops: const [0, 0.7],
+          Row(
+            children: [
+              CertTile(cert: cert),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  cert.track,
+                  style: AppTheme.display(size: 17, height: 1.15),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (cert.level != null) ...[
+                const SizedBox(width: 8),
+                LevelChip(cert.level!),
+              ],
+            ],
+          ),
+          if (stats.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(stats, style: AppTheme.body(size: 12.5, color: AppTheme.inkMuted)),
+          ],
+          if (cert.lessonsDone > 0 && cert.lessonsTotal > 0) ...[
+            const SizedBox(height: 10),
+            CertProgress(cert: cert),
+          ],
+          if (showPrices && price != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              [price, if (cert.priceNote != null) cert.priceNote!].join(' · '),
+              style: AppTheme.body(size: 12.5, weight: FontWeight.w600, color: AppTheme.inkSoft),
+            ),
+          ],
+          if (cert.lastVerified != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.check, size: 13, color: AppTheme.inkMuted),
+                const SizedBox(width: 4),
+                Text(
+                  'Verified ${formatIsoDate(cert.lastVerified!)}',
+                  style: AppTheme.body(size: 12, color: AppTheme.inkMuted),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              if (cert.practiceUrl != null) ...[
+                Expanded(
+                  child: CertButton(
+                    label: 'Practice',
+                    leading: const StrokeIcon('bolt', size: 14, color: AppTheme.gold, strokeWidth: 2),
+                    onPressed: onPractice,
                   ),
                 ),
-              ),
-            ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _monogram(cert),
-              const SizedBox(width: 14),
+                const SizedBox(width: 8),
+              ],
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title on its own line — the source of the old mid-word
-                    // wrapping was the badge squeezing this column.
-                    Text(
-                      cert.track,
-                      style: AppTheme.display(size: 18, height: 1.1),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _subtitle(cert),
-                      style: AppTheme.body(size: 12.5, color: AppTheme.inkFaint),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (comingSoon)
-                          _soonBadge()
-                        else
-                          inProgress ? _badge('IN PROGRESS', cert) : _newBadge(cert),
-                        comingSoon
-                            ? Text('Coming soon',
-                                style: AppTheme.body(size: 13, weight: FontWeight.w600, color: AppTheme.inkFaint))
-                            : Row(
-                                children: [
-                                  Text(inProgress ? 'Continue' : 'Start',
-                                      style: AppTheme.body(size: 13.5, weight: FontWeight.w600)),
-                                  const SizedBox(width: 5),
-                                  const Icon(Icons.chevron_right, size: 15, color: AppTheme.ink),
-                                ],
-                              ),
-                      ],
-                    ),
-                  ],
+                child: CertButton(
+                  label: started ? 'Continue' : 'Start',
+                  filled: true,
+                  trailing: const Icon(Icons.arrow_forward, size: 16, color: AppTheme.onGold),
+                  onPressed: onStart,
                 ),
               ),
+              const SizedBox(width: 8),
+              _MoreButton(label: 'More about ${cert.track}', onTap: onMore),
             ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _soonBadge() => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(color: AppTheme.hairline),
+/// 44px "⋯" circle that opens the course sheet.
+class _MoreButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _MoreButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        shape: CircleBorder(side: BorderSide(color: Colors.white.withValues(alpha: 0.16))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: const SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(Icons.more_horiz, size: 20, color: AppTheme.inkSoft),
+          ),
         ),
-        child: Text('COMING SOON',
-            style: AppTheme.body(size: 10.5, weight: FontWeight.w600, color: AppTheme.inkFaint, letterSpacing: 0.06 * 10.5)),
-      );
-
-  Widget _locked() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF13141F),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+}
+
+/// Compact, muted card for a cert with no content yet (manifest `planned`),
+/// or a locked one. Never navigates.
+class PlannedCertCard extends StatelessWidget {
+  final Cert cert;
+  final VoidCallback? onNotify;
+  final bool locked;
+
+  const PlannedCertCard({super.key, required this.cert, this.onNotify, this.locked = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = [cert.vendor, if (cert.examCode.isNotEmpty) cert.examCode].join(' · ');
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+      decoration: BoxDecoration(
+        color: AppTheme.frame,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: Row(
         children: [
-          Opacity(
-            opacity: 0.62,
-            child: Row(
+          CertTile(cert: cert, size: 36, muted: true),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.04),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.hairline),
-                  ),
-                  child: _BrandMark(cert: cert, color: AppTheme.inkFaint),
+                Text(
+                  cert.track,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTheme.display(size: 15, height: 1.15, color: AppTheme.inkSoft),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(cert.track,
-                          style: AppTheme.display(size: 18, height: 1.1, color: AppTheme.inkSoft),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 3),
-                      Text(_subtitle(cert),
-                          style: AppTheme.body(size: 12.5, color: AppTheme.inkFaint)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.04),
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(color: AppTheme.hairline),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.lock_outline, size: 11, color: AppTheme.inkFaint),
-                      const SizedBox(width: 4),
-                      Text('LOCKED',
-                          style: AppTheme.body(size: 10.5, weight: FontWeight.w600, color: AppTheme.inkFaint, letterSpacing: 0.06 * 10.5)),
-                    ],
-                  ),
-                ),
+                const SizedBox(height: 2),
+                Text(meta, style: AppTheme.body(size: 12, color: AppTheme.inkMuted)),
               ],
             ),
           ),
-          const SizedBox(height: 13),
-          Container(
-            padding: const EdgeInsets.only(top: 13),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: Colors.white.withOpacity(0.06))),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(width: 8),
+          if (locked)
+            Row(
               children: [
-                Text('available later',
-                    style: AppTheme.body(size: 12.5, color: AppTheme.inkFaint)),
-                Text('Certify Pro', style: AppTheme.body(size: 13, weight: FontWeight.w600, color: cert.ink)),
+                const Icon(Icons.lock_outline, size: 13, color: AppTheme.inkMuted),
+                const SizedBox(width: 4),
+                Text('Locked', style: AppTheme.body(size: 12.5, weight: FontWeight.w600, color: AppTheme.inkMuted)),
               ],
+            )
+          else if (onNotify != null)
+            Semantics(
+              container: true,
+              button: true,
+              label: 'Notify me when ${cert.track} launches',
+              excludeSemantics: true,
+              child: Material(
+                color: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(100),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.16)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: onNotify,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 44),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.notifications_none, size: 15, color: AppTheme.inkSoft),
+                          const SizedBox(width: 5),
+                          Text('Notify me',
+                              style: AppTheme.body(size: 13, weight: FontWeight.w600, color: AppTheme.inkSoft)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
         ],
       ),
     );
   }
-
-  Widget _monogram(Cert cert) => Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: cert.accent.withOpacity(0.16),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cert.accent.withOpacity(0.35)),
-        ),
-        child: _BrandMark(cert: cert, color: cert.ink),
-      );
-
-  Widget _badge(String label, Cert cert) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          color: cert.accent.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(color: cert.accent.withOpacity(0.28)),
-        ),
-        child: Text(label,
-            style: AppTheme.body(size: 10.5, weight: FontWeight.w600, color: cert.ink, letterSpacing: 0.06 * 10.5)),
-      );
-
-  Widget _newBadge(Cert cert) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: cert.accent,
-          borderRadius: BorderRadius.circular(100),
-        ),
-        child: Text('New', style: AppTheme.body(size: 10.5, weight: FontWeight.w700, color: AppTheme.bg)),
-      );
 }
 
-/// Card metadata line. Not every cert has an exam code (e.g. Databricks) and
-/// planned certs have no lessons yet, so each part is shown only when present:
-/// "DEA-C01 · 36 lessons", "35 lessons", or just "DP-700".
-String _subtitle(Cert cert) {
-  final code = cert.examCode;
-  final lessons = cert.lessonsTotal > 0 ? '${cert.lessonsTotal} lessons' : '';
-  if (code.isEmpty) return lessons;
-  if (lessons.isEmpty) return code;
-  return '$code · $lessons';
-}
-
-/// The brand mark shown in a cert's badge. Keyed on the vendor, not the exam
-/// code — many certs have no code, and the brand reads better anyway.
-///
-/// Renders the vendor monogram (in the cert's brand colour) by default. To show
-/// a real vendor logo, drop a monochrome PNG/SVG-exported-PNG into
-/// `assets/brands/`, declare that folder under `flutter: assets:` in
-/// pubspec.yaml, and map the vendor in [_logoAssets]. The asset is tinted with
-/// the badge colour and falls back to the monogram if it fails to load, so
-/// adding logos never risks an empty badge.
-class _BrandMark extends StatelessWidget {
-  final Cert cert;
-  final Color color;
-
-  const _BrandMark({required this.cert, required this.color});
-
-  /// vendor (lower-cased) -> bundled logo asset path. Empty by default; fill in
-  /// as real logos are added. Vendors not listed fall back to the monogram.
-  static const Map<String, String> _logoAssets = {};
-
-  @override
-  Widget build(BuildContext context) {
-    final asset = _logoAssets[cert.vendor.toLowerCase()];
-    if (asset != null) {
-      return Padding(
-        padding: const EdgeInsets.all(11),
-        child: Image.asset(
-          asset,
-          fit: BoxFit.contain,
-          color: color,
-          errorBuilder: (_, __, ___) => _monogram(),
-        ),
-      );
-    }
-    return _monogram();
-  }
-
-  Widget _monogram() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Center(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              cert.monogram,
-              style: AppTheme.body(size: 15, weight: FontWeight.w700, color: color),
-            ),
-          ),
-        ),
-      );
-}
-
-void _showComingSoon(BuildContext context, Cert cert) {
+void _snack(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
         content: Text(
-          '${cert.track} is coming soon!',
+          message,
           style: AppTheme.body(size: 14, weight: FontWeight.w600, color: AppTheme.ink),
         ),
         backgroundColor: AppTheme.surfaceRaised,
@@ -424,13 +446,4 @@ void _showComingSoon(BuildContext context, Cert cert) {
         duration: const Duration(seconds: 2),
       ),
     );
-}
-
-class _GearIcon extends StatelessWidget {
-  const _GearIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Icon(Icons.settings_outlined, size: 20, color: AppTheme.inkSoft);
-  }
 }

@@ -75,6 +75,54 @@
           "format": "date",
           "description": "Optional. First date the vendor exam can be sat (for brand-new exams)."
         },
+        "questions_total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Optional. Number of practice questions in the course's question bank. Omit (don't emit 0) when the course has no question bank yet."
+        },
+        "mocks_total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Optional. Number of full-length mock exams. Omit when there are none."
+        },
+        "level": {
+          "type": "string",
+          "enum": ["foundational", "associate", "professional", "specialty"],
+          "description": "Optional. The vendor's certification tier. Rendered as a chip on the card."
+        },
+        "last_verified": {
+          "type": "string",
+          "format": "date",
+          "description": "Optional. ISO date (YYYY-MM-DD) the content was last checked against the vendor's current exam guide."
+        },
+        "icon": {
+          "type": "string",
+          "enum": ["database", "ml", "genai", "analytics", "spark"],
+          "description": "Optional. Topic icon key. Apps render their own glyph per key and fall back to the monogram for missing or unknown keys, so new keys can be added without breaking old builds."
+        },
+        "practice_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional. Absolute URL of the course's practice-question page."
+        },
+        "ready_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional. Absolute URL of the 'Am I ready?' readiness check."
+        },
+        "guide_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional. Absolute URL of the exam-guide page."
+        },
+        "price": {
+          "type": "string",
+          "description": "Optional. Display-only price string including currency, e.g. \"$9.99\". Not a purchase link; the app hides it by default."
+        },
+        "price_note": {
+          "type": "string",
+          "description": "Optional. Short qualifier shown next to price, e.g. \"one-time unlock after free Unit 1\"."
+        },
         "units": {
           "type": "array",
           "description": "Optional top-level sections/domains of the course. Emitted by the generator from the course's real section list; may be omitted until wired up.",

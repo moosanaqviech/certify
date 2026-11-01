@@ -6,7 +6,9 @@ the mobile app fetches it at runtime. This kills the drift between the site
 catalog and the hardcoded `LocalCertRepository` in the app.
 
 - `catalog.schema.json` — JSON Schema (draft 2020-12) both ends validate against.
-- `catalog.json` — starter manifest, populated from the **live site as of 2026-09-15**.
+- `catalog.json` — copy of the live manifest (`generated_at` 2026-10-05, 11 certs),
+  refreshed 2026-11-01. `app/assets/catalog.json` is the same file bundled as
+  the app's offline fallback.
 
 ## The one rule that actually prevents drift
 
@@ -37,6 +39,31 @@ deliberately excluded and stay on the device, merged onto each cert by `id`:
 | `status`, colors, `lesson_url`, `units` | **manifest** | describe the course |
 | `lessons_done` / progress | **device (local)** | per learner |
 | `downloaded` / `downloading` | **device (local)** | per device |
+
+### Optional card/course-sheet fields
+
+These drive the richer catalog card and course sheet. Every one is optional:
+the app hides the matching UI when a field is absent, so the generator can
+emit them course by course. **Emit only real values** — omit a field rather
+than writing `0`, `""` or a placeholder URL.
+
+| Field | Type | Example | App use |
+|---|---|---|---|
+| `questions_total` | int | `420` | "· 420 questions" on card; stat tile in sheet |
+| `mocks_total` | int | `3` | "· 3 mock exams" on card; stat tile in sheet |
+| `level` | `foundational` \| `associate` \| `professional` \| `specialty` | `"associate"` | chip on card; "DATABRICKS · ASSOCIATE" in sheet |
+| `last_verified` | ISO date | `"2026-09-21"` | "✓ Verified 21 Sep 2026" on card; sheet footer |
+| `icon` | `database` \| `ml` \| `genai` \| `analytics` \| `spark` | `"database"` | topic glyph in the card tile (unknown/missing → monogram) |
+| `practice_url` | absolute URL | `https://certify.courses/…/practice.html` | "Practice" button (hidden if absent) |
+| `ready_url` | absolute URL | `https://certify.courses/…/ready.html` | "Am I ready?" row in sheet (hidden if absent) |
+| `guide_url` | absolute URL | `https://certify.courses/…/guide.html` | "Read the exam guide" row in sheet (hidden if absent) |
+| `price` | string | `"$9.99"` | price line — **hidden in the app by default** (see below) |
+| `price_note` | string | `"one-time unlock after free Unit 1"` | qualifier after the price |
+
+`price`/`price_note` are display-only. The app gates them behind a
+`showPrices` flag that is **off**, and never links to a web checkout: selling
+digital unlocks from inside the iOS/Android app outside store billing can
+breach App Store guideline 3.1.1 and Google Play's payments policy.
 
 The old seed had `lessonsDone: 11` baked in — that must not come from a shared
 file, or every user sees the same "11 done." The card's progress ring is

@@ -5,6 +5,24 @@ import '../models/cert.dart';
 import '../state.dart';
 import '../theme.dart';
 
+/// What the WebView screen opens: any course page (lesson, practice, readiness
+/// check, exam guide) plus the title shown in the top bar.
+class LessonArgs {
+  final String url;
+  final String title;
+  final Color? accent;
+
+  const LessonArgs({required this.url, required this.title, this.accent});
+
+  /// The course's lesson/chapter catalog.
+  LessonArgs.fromCert(Cert cert)
+      : url = cert.lessonUrl,
+        title = cert.track,
+        accent = cert.accent;
+}
+
+/// Hosts a course page in a WebView. Pushed via `/lesson` with [LessonArgs]
+/// (a bare [Cert] is still accepted and opens its lesson URL).
 class LessonScreen extends StatefulWidget {
   const LessonScreen({super.key});
 
@@ -20,7 +38,7 @@ class _LessonScreenState extends State<LessonScreen> {
   bool _loading = true;
   double _appliedScale = 1.0;
   bool _started = false;
-  Cert? _cert;
+  LessonArgs? _args;
 
   @override
   void initState() {
@@ -40,11 +58,16 @@ class _LessonScreenState extends State<LessonScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // The Cert arrives as a route argument; load its URL once it's available.
+    // The page to open arrives as a route argument; load it once available.
     if (_started) return;
     _started = true;
-    _cert = ModalRoute.of(context)?.settings.arguments as Cert?;
-    _controller.loadRequest(Uri.parse(_cert?.lessonUrl ?? _fallbackUrl));
+    final arg = ModalRoute.of(context)?.settings.arguments;
+    _args = switch (arg) {
+      LessonArgs a => a,
+      Cert c => LessonArgs.fromCert(c),
+      _ => null,
+    };
+    _controller.loadRequest(Uri.parse(_args?.url ?? _fallbackUrl));
   }
 
   /// Scale the remote lesson's text to mirror the in-app text-size choice.
@@ -69,7 +92,7 @@ class _LessonScreenState extends State<LessonScreen> {
       });
     }
 
-    final accent = _cert?.accent ?? AppTheme.accent;
+    final accent = _args?.accent ?? AppTheme.accent;
 
     // Route the Android system back button/gesture through the same handler as
     // the on-screen chevron: step back through the WebView first, then exit.
@@ -108,7 +131,16 @@ class _LessonScreenState extends State<LessonScreen> {
                         ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _args?.title ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.body(size: 14, weight: FontWeight.w600),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     Row(
                       children: [
                         Icon(Icons.check, size: 14, color: accent),

@@ -10,8 +10,16 @@ class AppTheme {
   static const Color ink = Color(0xFFF1F1F6);
   static const Color inkSoft = Color(0xFFA6A8B6);
   static const Color inkFaint = Color(0xFF62647A);
+  // Secondary text for small meta/caption copy on cards. inkFaint is too dim
+  // for small text on [surface] (~3:1); this clears WCAG AA (~5.6:1).
+  static const Color inkMuted = Color(0xFF8B8DA3);
   static const Color hairline = Color(0x14FFFFFF);
   static const Color accent = Color(0xFF7C8CF8);
+
+  // Primary call-to-action gold (matches the web catalog) and the dark ink
+  // used on top of it.
+  static const Color gold = Color(0xFFE3AC40);
+  static const Color onGold = Color(0xFF1B1405);
 
   // Per-cert
   static const Color databricksAccent = Color(0xFF8D7BF6);
