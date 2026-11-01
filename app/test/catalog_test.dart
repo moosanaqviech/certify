@@ -190,14 +190,15 @@ void main() {
       expect(find.bySemanticsLabel('More about Data Engineer Associate'), findsOneWidget);
     });
 
-    testWidgets('mapped vendor logo falls back to the monogram if the file is missing', (tester) async {
-      final cert = Cert.fromJson(_baseJson()); // Databricks is mapped; no logo file bundled yet
+    testWidgets('mapped vendor shows its bundled logo instead of the monogram', (tester) async {
+      final cert = Cert.fromJson(_baseJson()); // Databricks -> assets/brands/databricks.png
       await tester.runAsync(() async {
         await tester.pumpWidget(_host(CertCard(cert: cert, onStart: () {}, onPractice: () {}, onMore: () {})));
         await Future<void>.delayed(const Duration(milliseconds: 100));
       });
       await tester.pump();
-      expect(find.text('D'), findsOneWidget);
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.text('D'), findsNothing);
     });
   });
 
