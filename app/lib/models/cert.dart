@@ -114,6 +114,19 @@ class Cert {
   final String? availableUntil;
   final String? examAvailableFrom;
 
+  /// Optional course-sheet/card metadata. All nullable: the manifest may omit
+  /// any of them and the UI hides whatever is missing.
+  final int? questionsTotal;
+  final int? mocksTotal;
+  final String? level; // foundational | associate | professional | specialty
+  final String? lastVerified; // ISO date, e.g. "2026-09-21"
+  final String? icon; // database | ml | genai | analytics | spark
+  final String? practiceUrl;
+  final String? readyUrl;
+  final String? guideUrl;
+  final String? price; // display-only, e.g. "$9.99"
+  final String? priceNote;
+
   final List<LessonUnit> units;
 
   const Cert({
@@ -130,6 +143,16 @@ class Cert {
     required this.status,
     this.availableUntil,
     this.examAvailableFrom,
+    this.questionsTotal,
+    this.mocksTotal,
+    this.level,
+    this.lastVerified,
+    this.icon,
+    this.practiceUrl,
+    this.readyUrl,
+    this.guideUrl,
+    this.price,
+    this.priceNote,
     this.units = const [],
   });
 
@@ -152,6 +175,16 @@ class Cert {
         status: _statusFromJson(json['status'] as String),
         availableUntil: json['available_until'] as String?,
         examAvailableFrom: json['exam_available_from'] as String?,
+        questionsTotal: json['questions_total'] as int?,
+        mocksTotal: json['mocks_total'] as int?,
+        level: json['level'] as String?,
+        lastVerified: json['last_verified'] as String?,
+        icon: json['icon'] as String?,
+        practiceUrl: json['practice_url'] as String?,
+        readyUrl: json['ready_url'] as String?,
+        guideUrl: json['guide_url'] as String?,
+        price: json['price'] as String?,
+        priceNote: json['price_note'] as String?,
         units: (json['units'] as List<dynamic>? ?? [])
             .map((u) => LessonUnit.fromJson(u as Map<String, dynamic>))
             .toList(),
@@ -173,6 +206,16 @@ class Cert {
         'status': _statusToJson(status),
         if (availableUntil != null) 'available_until': availableUntil,
         if (examAvailableFrom != null) 'exam_available_from': examAvailableFrom,
+        if (questionsTotal != null) 'questions_total': questionsTotal,
+        if (mocksTotal != null) 'mocks_total': mocksTotal,
+        if (level != null) 'level': level,
+        if (lastVerified != null) 'last_verified': lastVerified,
+        if (icon != null) 'icon': icon,
+        if (practiceUrl != null) 'practice_url': practiceUrl,
+        if (readyUrl != null) 'ready_url': readyUrl,
+        if (guideUrl != null) 'guide_url': guideUrl,
+        if (price != null) 'price': price,
+        if (priceNote != null) 'price_note': priceNote,
         'units': units.map((u) => u.toJson()).toList(),
       };
 }

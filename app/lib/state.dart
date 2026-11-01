@@ -182,6 +182,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// "Notify me" on a planned cert. The only existing hook is the global
+  /// "New certification" alert preference, so this switches that on.
+  // TODO: subscribe to [cert.id] specifically once a push backend lands
+  // (NotificationService has no per-cert topic yet, and no local trigger).
+  void notifyWhenAvailable(Cert cert) {
+    if (notifNew) return;
+    notifNew = true;
+    _store.setBool(_Keys.notifNew, true);
+    notifyListeners();
+  }
+
   void setRemindAt(TimeOfDay time) {
     remindAt = time;
     _store.setInt(_Keys.remindMinutes, time.hour * 60 + time.minute);

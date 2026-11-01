@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "generated_at": "2026-09-15T00:00:00Z",
+  "generated_at": "2026-10-05T00:00:00Z",
   "certs": [
     {
       "id": "databricks-dea",
       "vendor": "Databricks",
       "track": "Data Engineer Associate",
-      "exam_code": null,
+      "exam_code": "DEA-02",
       "monogram": "D",
       "accent": "#8D7BF6",
       "ink": "#B4A9FF",
@@ -51,6 +51,30 @@
       "status": "live"
     },
     {
+      "id": "databricks-data-analyst",
+      "vendor": "Databricks",
+      "track": "Data Analyst Associate",
+      "exam_code": null,
+      "monogram": "D",
+      "accent": "#60A5FA",
+      "ink": "#9CC4FF",
+      "lesson_url": "https://certify.courses/databricks-data-analyst-associate/index.html",
+      "lessons_total": 43,
+      "status": "live"
+    },
+    {
+      "id": "databricks-spark",
+      "vendor": "Databricks",
+      "track": "Apache Spark Developer Associate",
+      "exam_code": null,
+      "monogram": "D",
+      "accent": "#FF6F1F",
+      "ink": "#FFB07A",
+      "lesson_url": "https://certify.courses/databricks-apache-spark-developer-associate/index.html",
+      "lessons_total": 40,
+      "status": "live"
+    },
+    {
       "id": "aws-dea",
       "vendor": "AWS",
       "track": "Data Engineer Associate",
@@ -59,8 +83,8 @@
       "accent": "#F59E0B",
       "ink": "#F7C873",
       "lesson_url": "https://certify.courses/aws-data-engineer-associate/index.html",
-      "lessons_total": 36,
-      "status": "authoring"
+      "lessons_total": 40,
+      "status": "live"
     },
     {
       "id": "aws-mla-c02",
@@ -72,27 +96,60 @@
       "ink": "#F7C873",
       "lesson_url": "https://certify.courses/aws-machine-learning-engineer-associate-mla-c02/index.html",
       "lessons_total": 76,
-      "status": "authoring",
+      "status": "live",
       "exam_available_from": "2026-09-29",
       "units": [
-        { "id": "mla-c02-d1", "name": "Data Preparation" },
-        { "id": "mla-c02-d2", "name": "ML and FM Development" },
-        { "id": "mla-c02-d3", "name": "Deployment and Orchestration" },
-        { "id": "mla-c02-d4", "name": "Operating and Securing" }
+        {
+          "id": "mla-c02-d1",
+          "name": "Data Preparation"
+        },
+        {
+          "id": "mla-c02-d2",
+          "name": "ML and FM Development"
+        },
+        {
+          "id": "mla-c02-d3",
+          "name": "Deployment and Orchestration"
+        },
+        {
+          "id": "mla-c02-d4",
+          "name": "Operating and Securing"
+        }
       ]
     },
     {
-      "id": "aws-mla-c01",
+      "id": "aws-aif-c01",
       "vendor": "AWS",
-      "track": "Machine Learning Engineer Associate (legacy)",
-      "exam_code": "MLA-C01",
+      "track": "AI Practitioner",
+      "exam_code": "AIF-C01",
       "monogram": "aws",
       "accent": "#F59E0B",
       "ink": "#F7C873",
-      "lesson_url": "https://certify.courses/aws-machine-learning-engineer-associate-mla-c01/index.html",
-      "lessons_total": 59,
-      "status": "retiring",
-      "available_until": "2026-09-28"
+      "lesson_url": "https://certify.courses/aws-ai-practitioner/index.html",
+      "lessons_total": 58,
+      "status": "live",
+      "units": [
+        {
+          "id": "aif-c01-d1",
+          "name": "Fundamentals of AI and ML"
+        },
+        {
+          "id": "aif-c01-d2",
+          "name": "Fundamentals of Generative AI"
+        },
+        {
+          "id": "aif-c01-d3",
+          "name": "Applications of Foundation Models"
+        },
+        {
+          "id": "aif-c01-d4",
+          "name": "Guidelines for Responsible AI"
+        },
+        {
+          "id": "aif-c01-d5",
+          "name": "Security, Compliance, and Governance"
+        }
+      ]
     },
     {
       "id": "azure-dp700",
